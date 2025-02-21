@@ -181,7 +181,9 @@ const CoachSignup = () => {
       case 3:
         fieldsToValidate = ['idProof', 'coachingCertification', 'linkedinProfile'];
         break;
-      // Add validation for other steps as needed
+      case 5: // Add validation for authentication step
+        fieldsToValidate = ['password'];
+        break;
     }
 
     const isStepValid = await trigger(fieldsToValidate);
@@ -189,9 +191,7 @@ const CoachSignup = () => {
       const stepData = watch();
       setFormData(prev => ({
         ...prev,
-        ...Object.fromEntries(
-          Object.entries(stepData).map(([key, value]) => [key, value ?? ""])
-        )
+        ...stepData
       }));
       setCurrentStep(prev => Math.min(prev + 1, steps.length - 1));
     }
@@ -208,7 +208,13 @@ const CoachSignup = () => {
   const onSubmit = async (data) => {
     try {
       setIsSubmitting(true);
-      
+
+      // Validate password
+      if (!data.password?.trim()) {
+        toast.error("Password is required");
+        return;
+      }
+
       // Create a clean data object for submission
       const submissionData = {
         ...data,
@@ -219,7 +225,7 @@ const CoachSignup = () => {
           fullTime: Boolean(data.availability?.fullTime),
           flexible: Boolean(data.availability?.flexible)
         },
-        status: "pending", // Add status for coach approval
+        status: "pending",
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
@@ -233,12 +239,8 @@ const CoachSignup = () => {
 
       // Store the data in Firestore
       await setDoc(coachDoc, submissionData);
-
       toast.success("Registration successful! Please wait for admin approval.");
-      
-      // Optional: Redirect to a success page or login page
-      router.push('/login');
-      
+
     } catch (error) {
       console.error("Error submitting form:", error);
       toast.error(error.message || "Failed to submit form. Please try again.");
@@ -679,7 +681,10 @@ const CoachSignup = () => {
                 name="password"
                 control={control}
                 rules={{ 
-                  required: "Password is required",
+                  required: {
+                    value: true,
+                    message: "Password is required"
+                  },
                   minLength: {
                     value: 8,
                     message: "Password must be at least 8 characters"
@@ -690,6 +695,7 @@ const CoachSignup = () => {
                     <Label>Password</Label>
                     <Input 
                       type="password" 
+                      required
                       placeholder="Enter your password"
                       {...field}
                     />
@@ -904,7 +910,7 @@ const CoachSignup = () => {
             {isSubmitting 
               ? "Submitting..." 
               : currentStep === steps.length - 1 
-                ? "Submit" 
+                ? "Submit Registration"
                 : "Next"
             }
           </Button>
