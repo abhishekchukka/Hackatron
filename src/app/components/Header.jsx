@@ -112,9 +112,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Menu, X, ChevronDown } from "lucide-react";
-import { onAuthStateChanged, signOut } from "firebase/auth";
-import { auth } from "../utils/firebase";
 import { Poppins } from "next/font/google";
+import { useDispatch, useSelector } from "react-redux";
 
 const poppins = Poppins({
     subsets: ["latin"],
@@ -124,27 +123,13 @@ const poppins = Poppins({
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [user, setUser] = useState(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      if (currentUser) {
-        localStorage.setItem("user", currentUser.email);
-        setUser(currentUser.email);
-      } else {
-        localStorage.removeItem("user");
-        setUser(null);
-      }
-    });
-    return () => unsubscribe();
-  }, []);
-
+  const user = JSON.parse(localStorage.getItem("user"))?.fullName;
   const handleLogout = async () => {
-    await signOut(auth);
-    localStorage.removeItem("user");
-    setUser(null);
-    setDropdownOpen(false);
+    dispatch.logout()
+    toast.success("logged out successfully")
   };
 
   const NavLink = ({ href, children }) => (

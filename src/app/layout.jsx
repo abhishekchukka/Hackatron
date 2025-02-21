@@ -2,11 +2,10 @@
 
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { Toaster } from "@/components/ui/sonner";
+import { Toaster } from "react-hot-toast";
 import Header from "./components/Header";
-import { useState, useEffect } from "react";
-import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "./utils/firebase";
+import { Provider } from "react-redux";
+import appStore from "./utils/store/appStore";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,25 +18,19 @@ const geistMono = Geist_Mono({
 });
 
 export default function RootLayout({ children }) {
-  const [user, setUser] = useState(null);
+  
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      localStorage.setItem("user", JSON.stringify(currentUser));
-    });
-
-    return () => unsubscribe();
-  }, []);
+  
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Toaster />
-        <Header user={user} />
-
+        <Provider store={appStore}>
+           <Toaster />
+           <Header />
         {children}
+        </Provider>
       </body>
     </html>
   );
