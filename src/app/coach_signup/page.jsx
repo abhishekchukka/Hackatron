@@ -237,7 +237,7 @@ const CoachSignup = () => {
       toast.success("Registration successful! Please wait for admin approval.");
       
       // Optional: Redirect to a success page or login page
-      // router.push('/login');
+      router.push('/login');
       
     } catch (error) {
       console.error("Error submitting form:", error);
