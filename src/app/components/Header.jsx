@@ -35,15 +35,15 @@ export default function Header() {
     <header className="bg-white border-b border-gray-100 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <h1 className={`text-2xl font-bold tracking-tight ${poppins.className}`}>
+          <h1 className={`text-2xl font-bold tracking-tight ${poppins.className}`} data-aos="fade-right" data-aos-duration="1000">
             Solo Leveling
           </h1>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            <Link href="/" className="px-3 py-2 text-gray-700 hover:text-black">Home</Link>
-            <Link href="/marketplace" className="px-3 py-2 text-gray-700 hover:text-black">Marketplace</Link>
-            <Link href="/coaches" className="px-3 py-2 text-gray-700 hover:text-black">Coaches</Link>
+            <Link href="/" className="px-3 py-2 text-gray-700 hover:text-black" data-aos="zoom-in" data-aos-duration="1000">Home</Link>
+            <Link href="/marketplace" className="px-3 py-2 text-gray-700 hover:text-black" data-aos="zoom-in" data-aos-duration="1000">Marketplace</Link>
+            <Link href="/coaches" className="px-3 py-2 text-gray-700 hover:text-black" data-aos="zoom-in" data-aos-duration="1000">Coaches</Link>
 
             {user ? (
               <div className="relative">
@@ -51,7 +51,7 @@ export default function Header() {
                   className="flex items-center space-x-2 bg-gray-50 hover:bg-gray-100 px-4 py-2 rounded-lg"
                   onClick={() => setDropdownOpen(!dropdownOpen)}
                 >
-                  <span>{user}</span>
+                  <span data-aos="zoom-in" data-aos-duration="1000">{user}</span>
                   <ChevronDown size={16} className={`transform ${dropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
 
@@ -64,8 +64,8 @@ export default function Header() {
                 )}
               </div>
             ) : (
-              <Link href="/login" className="bg-gray-50 hover:bg-gray-100 px-6 py-2 rounded-lg">
-                Sign in
+              <Link href="/login" className="bg-gray-50 hover:bg-gray-100 px-6 py-2 rounded-lg" data-aos="zoom-in" data-aos-duration="1000">
+sign-in
               </Link>
             )}
           </nav>
@@ -79,15 +79,15 @@ export default function Header() {
         {/* Mobile Navigation */}
         {menuOpen && (
           <nav className="md:hidden py-4 space-y-2">
-            <Link href="/" className="block px-4 py-2 text-gray-700 hover:bg-gray-50" onClick={() => setMenuOpen(false)}>Home</Link>
-            <Link href="/marketplace" className="block px-4 py-2 text-gray-700 hover:bg-gray-50" onClick={() => setMenuOpen(false)}>Marketplace</Link>
-            <Link href="/coaches" className="block px-4 py-2 text-gray-700 hover:bg-gray-50" onClick={() => setMenuOpen(false)}>Coaches</Link>
+            <Link href="/" className="block px-4 py-2 text-gray-700 hover:bg-gray-50" onClick={() => setMenuOpen(false)} data-aos="zoom-in" data-aos-duration="1000">Home</Link>
+            <Link href="/marketplace" className="block px-4 py-2 text-gray-700 hover:bg-gray-50" onClick={() => setMenuOpen(false)} data-aos="zoom-in" data-aos-duration="1000">Marketplace</Link>
+            <Link href="/coaches" className="block px-4 py-2 text-gray-700 hover:bg-gray-50" onClick={() => setMenuOpen(false)} data-aos="zoom-in" data-aos-duration="1000">Coaches</Link>
             {user ? (
               <button onClick={handleLogout} className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50">
                 Sign out
               </button>
             ) : (
-              <Link href="/login" className="block px-4 py-2 text-gray-700 hover:bg-gray-50" onClick={() => setMenuOpen(false)}>
+              <Link href="/login" className="block px-4 py-2 text-gray-700 hover:bg-gray-50" onClick={() => setMenuOpen(false)} data-aos="zoom-in" data-aos-duration="1000">
                 Sign in
               </Link>
             )}

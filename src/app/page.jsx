@@ -1,9 +1,8 @@
-import Image from "next/image";
-import Login from "./components/Login";
+
 import { HeroSection } from "@/components/hero-section";
 import { Features } from "@/components/features";
-import { Testimonials } from "@/components/testimonials";
 import { Footer } from "@/components/footer";
+import Developers from "./components/Developers";
 
 export default function Home() {
   return (
@@ -11,7 +10,7 @@ export default function Home() {
       <div className="">
         <HeroSection />
         <Features />
-        <Testimonials />
+        <Developers/>
         <Footer />
       </div>
     </div>

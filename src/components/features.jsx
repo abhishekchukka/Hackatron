@@ -40,9 +40,9 @@ export function Features() {
         <div
           className="flex flex-col items-center justify-center space-y-4 text-center">
           <div className="space-y-2">
-            <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Platform Features</h2>
+            <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl" data-aos="zoom-in" data-aos-duration="1000">Platform Features</h2>
             <p
-              className="max-w-[900px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+              className="max-w-[900px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed" data-aos="zoom-in" data-aos-duration="1000">
               Everything you need to succeed in your athletic career
             </p>
           </div>
@@ -52,7 +52,7 @@ export function Features() {
           {features.map((feature, index) => (
             <div
               key={index}
-              className="flex flex-col items-center space-y-4 p-6 border rounded-lg">
+              className="flex flex-col items-center space-y-4 p-6 border rounded-lg" data-aos="zoom-in" data-aos-duration="2000">
               <div className="p-3 rounded-full bg-primary/10 text-primary">{feature.icon}</div>
               <h3 className="text-xl font-bold">{feature.title}</h3>
               <p className="text-center text-gray-500">{feature.description}</p>
