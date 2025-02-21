@@ -29,6 +29,8 @@ import {
 import { db, storage } from "../utils/firebase";
 import { doc, setDoc } from "firebase/firestore";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { collection } from "firebase/firestore";
 
 const steps = [
   "Personal Information",
@@ -44,7 +46,7 @@ const steps = [
 const defaultValues = {
   // Personal Information
   fullName: "",
-  dateOfBirth: undefined,
+  dateOfBirth: null,
   gender: "",
   email: "",
   phone: "",
@@ -103,10 +105,127 @@ const defaultValues = {
   termsAgreed: false
 };
 
+// Add the YearMonthPicker component (same as coach form)
+const YearMonthPicker = ({ field, label }) => {
+  const years = Array.from({ length: 100 }, (_, i) => new Date().getFullYear() - i);
+  const months = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
+
+  // Ensure the date is properly parsed
+  const selectedDate = field.value ? (field.value instanceof Date ? field.value : new Date(field.value)) : null;
+  const [selectedYear, setSelectedYear] = useState(selectedDate?.getFullYear() || null);
+  const [selectedMonth, setSelectedMonth] = useState(selectedDate?.getMonth() || null);
+
+  // Update state when field value changes
+  useEffect(() => {
+    const date = field.value ? (field.value instanceof Date ? field.value : new Date(field.value)) : null;
+    setSelectedYear(date?.getFullYear() || null);
+    setSelectedMonth(date?.getMonth() || null);
+  }, [field.value]);
+
+  // Validate date before using it
+  const isValidDate = (date) => date instanceof Date && !isNaN(date);
+
+  return (
+    <div>
+      <Label>{label}</Label>
+      <div className="grid grid-cols-2 gap-2 mb-2">
+        <Select
+          value={selectedYear?.toString() ?? ""}
+          onValueChange={(year) => {
+            const yearNum = parseInt(year);
+            setSelectedYear(yearNum);
+            if (selectedMonth !== null) {
+              const newDate = new Date(yearNum, selectedMonth, 1);
+              if (isValidDate(newDate)) {
+                field.onChange(newDate);
+              }
+            }
+          }}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Year" />
+          </SelectTrigger>
+          <SelectContent>
+            {years.map((year) => (
+              <SelectItem key={year} value={year.toString()}>
+                {year}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={selectedMonth?.toString() ?? ""}
+          onValueChange={(month) => {
+            const monthIndex = parseInt(month);
+            setSelectedMonth(monthIndex);
+            if (selectedYear !== null) {
+              const newDate = new Date(selectedYear, monthIndex, 1);
+              if (isValidDate(newDate)) {
+                field.onChange(newDate);
+              }
+            }
+          }}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Month" />
+          </SelectTrigger>
+          <SelectContent>
+            {months.map((month, index) => (
+              <SelectItem key={month} value={index.toString()}>
+                {month}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            className={cn(
+              "w-full justify-start text-left font-normal",
+              !field.value && "text-muted-foreground"
+            )}
+          >
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            {field.value && isValidDate(new Date(field.value)) 
+              ? format(new Date(field.value), "PPP") 
+              : <span>Pick a date</span>
+            }
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            mode="single"
+            selected={field.value && isValidDate(new Date(field.value)) ? new Date(field.value) : null}
+            onSelect={(date) => {
+              field.onChange(date);
+              if (date && isValidDate(date)) {
+                setSelectedYear(date.getFullYear());
+                setSelectedMonth(date.getMonth());
+              }
+            }}
+            defaultMonth={selectedYear && selectedMonth !== null ? new Date(selectedYear, selectedMonth) : undefined}
+            disabled={(date) =>
+              date > new Date() || date < new Date(years[years.length - 1], 0, 1)
+            }
+            initialFocus
+          />
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+};
+
 const PlayerSignup = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState(defaultValues); // Store complete form data
+  const router = useRouter();
 
   const { 
     control, 
@@ -116,7 +235,7 @@ const PlayerSignup = () => {
     reset,
     trigger 
   } = useForm({
-    defaultValues: {}, // Start with empty defaults
+    defaultValues, // Use the defaultValues object directly instead of empty object
     mode: "onChange"
   });
 
@@ -132,56 +251,56 @@ const PlayerSignup = () => {
     switch(step) {
       case 0:
         return {
-          fullName: formData.fullName || "",
-          dateOfBirth: formData.dateOfBirth || undefined,
-          gender: formData.gender || "",
-          email: formData.email || "",
-          phone: formData.phone || "",
-          profilePicture: formData.profilePicture || ""
+          fullName: formData.fullName ?? "",
+          dateOfBirth: formData.dateOfBirth ?? null,
+          gender: formData.gender ?? "",
+          email: formData.email ?? "",
+          phone: formData.phone ?? "",
+          profilePicture: formData.profilePicture ?? ""
         };
       case 1:
         return {
-          primarySport: formData.primarySport || "",
-          secondarySport: formData.secondarySport || "",
-          currentLevel: formData.currentLevel || "",
-          playingExperience: formData.playingExperience || "0",
-          achievements: formData.achievements || "",
-          currentClub: formData.currentClub || "",
-          coachDetails: formData.coachDetails || ""
+          primarySport: formData.primarySport ?? "",
+          secondarySport: formData.secondarySport ?? "",
+          currentLevel: formData.currentLevel ?? "",
+          playingExperience: formData.playingExperience ?? "0",
+          achievements: formData.achievements ?? "",
+          currentClub: formData.currentClub ?? "",
+          coachDetails: formData.coachDetails ?? ""
         };
       case 2:
         return {
-          height: formData.height || "0",
-          weight: formData.weight || "0",
-          dominantSide: formData.dominantSide || "right"
+          height: formData.height ?? "0",
+          weight: formData.weight ?? "0",
+          dominantSide: formData.dominantSide ?? "right"
         };
       case 3:
         return {
-          existingInjuries: formData.existingInjuries || false,
-          medicalConditions: formData.medicalConditions || { asthma: false, diabetes: false, heartCondition: false, other: false },
-          previousSurgeries: formData.previousSurgeries || "",
-          allergies: formData.allergies || "",
-          emergencyContact: formData.emergencyContact || { name: "", relationship: "", phone: "" },
-          dietaryPreferences: formData.dietaryPreferences || "",
-          fitnessCertificate: formData.fitnessCertificate || ""
+          existingInjuries: formData.existingInjuries ?? false,
+          medicalConditions: formData.medicalConditions ?? { asthma: false, diabetes: false, heartCondition: false, other: false },
+          previousSurgeries: formData.previousSurgeries ?? "",
+          allergies: formData.allergies ?? "",
+          emergencyContact: formData.emergencyContact ?? { name: "", relationship: "", phone: "" },
+          dietaryPreferences: formData.dietaryPreferences ?? "",
+          fitnessCertificate: formData.fitnessCertificate ?? ""
         };
       case 4:
         return {
-          careerGoal: formData.careerGoal || "",
-          lookingForCoach: formData.lookingForCoach || false,
-          lookingForTeam: formData.lookingForTeam || false,
-          interestedInSponsorships: formData.interestedInSponsorships || false
+          careerGoal: formData.careerGoal ?? "",
+          lookingForCoach: formData.lookingForCoach ?? false,
+          lookingForTeam: formData.lookingForTeam ?? false,
+          interestedInSponsorships: formData.interestedInSponsorships ?? false
         };
       case 5:
         return {
-          instagram: formData.instagram || "",
-          twitter: formData.twitter || "",
-          youtube: formData.youtube || "",
-          linkedin: formData.linkedin || "",
-          idProof: formData.idProof || "",
-          password: formData.password || "",
-          dataConsent: formData.dataConsent || false,
-          termsAgreed: formData.termsAgreed || false
+          instagram: formData.instagram ?? "",
+          twitter: formData.twitter ?? "",
+          youtube: formData.youtube ?? "",
+          linkedin: formData.linkedin ?? "",
+          idProof: formData.idProof ?? "",
+          password: formData.password ?? "",
+          dataConsent: formData.dataConsent ?? false,
+          termsAgreed: formData.termsAgreed ?? false
         };
       default:
         return {};
@@ -194,14 +313,13 @@ const PlayerSignup = () => {
     const isStepValid = await trigger(fields);
     
     if (isStepValid) {
-      // Save current step data
       const stepData = watch();
       setFormData(prev => ({
         ...prev,
-        ...stepData
+        ...Object.fromEntries(
+          Object.entries(stepData).map(([key, value]) => [key, value ?? null])
+        )
       }));
-      
-      // Move to next step
       setCurrentStep(prev => Math.min(prev + 1, steps.length - 1));
     }
   };
@@ -216,25 +334,46 @@ const PlayerSignup = () => {
     try {
       setIsSubmitting(true);
       
-      // Combine all data
-      const finalData = {
+      // Get the current form data
+      const currentFormData = watch();
+      
+      // Create a clean data object for submission
+      const submissionData = {
         ...formData,
-        ...data,
-        dateOfBirth: formData.dateOfBirth ? formData.dateOfBirth.toISOString() : "",
-        height: Number(formData.height) || 0,
-        weight: Number(formData.weight) || 0,
-        playingExperience: Number(formData.playingExperience) || 0,
-        status: "pending",
+        ...currentFormData, // Use the current form data instead of data parameter
+        dateOfBirth: formData.dateOfBirth ? formData.dateOfBirth.toISOString() : null,
+        medicalConditions: formData.medicalConditions || {
+          asthma: false,
+          diabetes: false,
+          heartCondition: false,
+          other: false
+        },
+        status: "active",
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
 
-      delete finalData.dataConsent;
+      // Validate email and password
+      if (!submissionData.email?.trim()) {
+        throw new Error("Email is required");
+      }
 
-      const playerRef = doc(db, "players", finalData.email);
-      await setDoc(playerRef, finalData);
+      if (!submissionData.password?.trim()) {
+        throw new Error("Password is required");
+      }
 
-      toast.success("Registration successful! Please wait for approval.");
+      // Only remove non-essential data
+      delete submissionData.confirmPassword;
+      delete submissionData.termsAgreed;
+
+      // Create user document in Firestore
+      const playersRef = collection(db, "players");
+      const playerDoc = doc(playersRef, submissionData.email.toLowerCase().trim());
+      await setDoc(playerDoc, submissionData);
+
+      toast.success("Registration successful!");
+      // router.push('/login');
+      
     } catch (error) {
       console.error("Error submitting form:", error);
       toast.error(error.message || "Failed to submit form. Please try again.");
@@ -272,43 +411,23 @@ const PlayerSignup = () => {
               <Controller
                 name="dateOfBirth"
                 control={control}
+                defaultValue={null}
                 render={({ field }) => (
-                  <div>
-                    <Label>Date of Birth</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant={"outline"}
-                          className={cn(
-                            "w-full justify-start text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
+                  <YearMonthPicker field={field} label="Date of Birth" />
                 )}
               />
 
               <Controller
                 name="gender"
                 control={control}
-                rules={{ required: "Gender is required" }}
+                defaultValue=""
                 render={({ field }) => (
                   <div>
                     <Label>Gender</Label>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select 
+                      value={field.value ?? ""} 
+                      onValueChange={field.onChange}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select gender" />
                       </SelectTrigger>
@@ -916,6 +1035,7 @@ const PlayerSignup = () => {
               <Controller
                 name="password"
                 control={control}
+                defaultValue=""
                 rules={{ 
                   required: "Password is required",
                   minLength: {
@@ -923,14 +1043,15 @@ const PlayerSignup = () => {
                     message: "Password must be at least 8 characters"
                   }
                 }}
-                render={({ field: { onChange, value } }) => (
+                render={({ field }) => (
                   <div>
                     <Label>Password</Label>
                     <Input 
                       type="password" 
                       placeholder="Enter your password"
-                      value={value || ""}
-                      onChange={onChange}
+                      {...field}
+                      value={field.value ?? ""}
+                      onChange={(e) => field.onChange(e.target.value)}
                     />
                     {errors.password && (
                       <span className="text-sm text-red-500">{errors.password.message}</span>

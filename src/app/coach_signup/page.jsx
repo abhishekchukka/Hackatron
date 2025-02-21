@@ -44,7 +44,7 @@ const steps = [
 const defaultValues = {
   // Personal Details
   fullName: "",
-  dateOfBirth: undefined,
+  dateOfBirth: null,
   gender: "",
   nationality: "",
   profilePicture: "",
@@ -85,6 +85,7 @@ const defaultValues = {
 const CoachSignup = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState(defaultValues);
   
   const { 
     control, 
@@ -103,28 +104,95 @@ const CoachSignup = () => {
 
   // Reset form when component mounts
   useEffect(() => {
-    reset(defaultValues);
-  }, [reset]);
+    // Reset only the fields for the current step
+    const stepFields = getStepFields(currentStep);
+    reset(stepFields);
+  }, [currentStep, reset, formData]);
+
+  // Add this function before the handleNextStep function
+  const getStepFields = (step) => {
+    switch(step) {
+      case 0: // Personal Details
+        return {
+          fullName: formData.fullName ?? "",
+          dateOfBirth: formData.dateOfBirth ?? null,
+          gender: formData.gender ?? "",
+          nationality: formData.nationality ?? "",
+          profilePicture: formData.profilePicture ?? ""
+        };
+      case 1: // Contact Information
+        return {
+          email: formData.email ?? "",
+          phone: formData.phone ?? "",
+          address: formData.address ?? ""
+        };
+      case 2: // Professional Details
+        return {
+          primarySport: formData.primarySport ?? "",
+          yearsExperience: formData.yearsExperience ?? "",
+          coachingLevel: formData.coachingLevel ?? "",
+          certifications: formData.certifications ?? "",
+          currentAffiliation: formData.currentAffiliation ?? "",
+          achievements: formData.achievements ?? ""
+        };
+      case 3: // Verification
+        return {
+          idProof: formData.idProof ?? "",
+          coachingCertification: formData.coachingCertification ?? "",
+          linkedinProfile: formData.linkedinProfile ?? ""
+        };
+      case 4: // Additional Information
+        return {
+          coachingPhilosophy: formData.coachingPhilosophy ?? "",
+          preferredAgeGroups: formData.preferredAgeGroups ?? [],
+          availability: {
+            partTime: formData.availability?.partTime ?? false,
+            fullTime: formData.availability?.fullTime ?? false,
+            flexible: formData.availability?.flexible ?? false
+          }
+        };
+      case 5: // Authentication
+        return {
+          password: formData.password ?? "",
+          confirmPassword: formData.confirmPassword ?? "",
+          termsAgreed: formData.termsAgreed ?? false
+        };
+      case 6: // Review
+        return formData;
+      default:
+        return {};
+    }
+  };
 
   // Validate current step before proceeding
   const handleNextStep = async () => {
     let fieldsToValidate = [];
     
     switch (currentStep) {
-      case 0: // Personal Details
+      case 0:
         fieldsToValidate = ['fullName', 'dateOfBirth', 'gender', 'nationality'];
         break;
-      case 1: // Contact Information
+      case 1:
         fieldsToValidate = ['email', 'phone'];
         break;
-      case 2: // Professional Details
+      case 2:
         fieldsToValidate = ['primarySport', 'yearsExperience', 'coachingLevel'];
+        break;
+      case 3:
+        fieldsToValidate = ['idProof', 'coachingCertification', 'linkedinProfile'];
         break;
       // Add validation for other steps as needed
     }
 
     const isStepValid = await trigger(fieldsToValidate);
     if (isStepValid) {
+      const stepData = watch();
+      setFormData(prev => ({
+        ...prev,
+        ...Object.fromEntries(
+          Object.entries(stepData).map(([key, value]) => [key, value ?? ""])
+        )
+      }));
       setCurrentStep(prev => Math.min(prev + 1, steps.length - 1));
     }
   };
@@ -190,12 +258,13 @@ const CoachSignup = () => {
                 name="fullName"
                 control={control}
                 defaultValue=""
-                render={({ field: { onChange, value } }) => (
+                render={({ field }) => (
                   <div>
                     <Label>Full Name</Label>
                     <Input 
-                      value={value || ""}
-                      onChange={onChange}
+                      {...field}
+                      value={field.value ?? ""}
+                      onChange={(e) => field.onChange(e.target.value)}
                       placeholder="Enter your full name"
                     />
                     {errors.fullName && (
@@ -208,32 +277,9 @@ const CoachSignup = () => {
               <Controller
                 name="dateOfBirth"
                 control={control}
+                defaultValue={null}
                 render={({ field }) => (
-                  <div>
-                    <Label>Date of Birth</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant={"outline"}
-                          className={cn(
-                            "w-full justify-start text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
+                  <YearMonthPicker field={field} label="Date of Birth" />
                 )}
               />
 
@@ -241,10 +287,13 @@ const CoachSignup = () => {
                 name="gender"
                 control={control}
                 defaultValue=""
-                render={({ field: { onChange, value } }) => (
+                render={({ field }) => (
                   <div>
                     <Label>Gender</Label>
-                    <Select onValueChange={onChange} value={value || ""}>
+                    <Select 
+                      value={field.value ?? ""} 
+                      onValueChange={field.onChange}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select gender" />
                       </SelectTrigger>
@@ -484,12 +533,15 @@ const CoachSignup = () => {
               <Controller
                 name="idProof"
                 control={control}
+                defaultValue=""
                 render={({ field }) => (
                   <div>
                     <Label>Government ID Proof URL</Label>
                     <Input 
-                      placeholder="Enter ID document URL"
                       {...field}
+                      value={field.value ?? ""}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      placeholder="Enter ID document URL"
                     />
                     <p className="text-sm text-gray-500 mt-1">URL to Aadhaar, Passport, or other valid ID</p>
                   </div>
@@ -499,12 +551,15 @@ const CoachSignup = () => {
               <Controller
                 name="coachingCertification"
                 control={control}
+                defaultValue=""
                 render={({ field }) => (
                   <div>
                     <Label>Coaching Certification URL</Label>
                     <Input 
-                      placeholder="Enter certification document URL"
                       {...field}
+                      value={field.value ?? ""}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      placeholder="Enter certification document URL"
                     />
                     <p className="text-sm text-gray-500 mt-1">URL to your coaching certificates</p>
                   </div>
@@ -514,12 +569,15 @@ const CoachSignup = () => {
               <Controller
                 name="linkedinProfile"
                 control={control}
+                defaultValue=""
                 render={({ field }) => (
                   <div>
                     <Label>LinkedIn Profile URL</Label>
                     <Input 
-                      placeholder="https://linkedin.com/in/your-profile"
                       {...field}
+                      value={field.value ?? ""}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      placeholder="https://linkedin.com/in/your-profile"
                     />
                   </div>
                 )}
@@ -598,8 +656,7 @@ const CoachSignup = () => {
                       render={({ field }) => (
                         <div className="flex items-center space-x-2">
                           <Switch 
-                            id={id}
-                            checked={field.value}
+                            checked={field.value ?? false}
                             onCheckedChange={field.onChange}
                           />
                           <Label htmlFor={id}>{label}</Label>
@@ -650,13 +707,10 @@ const CoachSignup = () => {
                 render={({ field }) => (
                   <div className="flex items-center space-x-2">
                     <Checkbox 
-                      id="terms"
-                      checked={field.value}
+                      checked={field.value ?? false}
                       onCheckedChange={field.onChange}
                     />
-                    <Label htmlFor="terms">
-                      I agree to the terms and conditions
-                    </Label>
+                    <Label>I agree to terms</Label>
                     {errors.termsAgreed && (
                       <span className="text-sm text-red-500">{errors.termsAgreed.message}</span>
                     )}
@@ -710,6 +764,122 @@ const CoachSignup = () => {
           </div>
         );
     }
+  };
+
+  // Create a YearMonthPicker component for better date selection
+  const YearMonthPicker = ({ field, label }) => {
+    const years = Array.from({ length: 100 }, (_, i) => new Date().getFullYear() - i);
+    const months = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"
+    ];
+
+    // Ensure the date is properly parsed
+    const selectedDate = field.value ? (field.value instanceof Date ? field.value : new Date(field.value)) : null;
+    const [selectedYear, setSelectedYear] = useState(selectedDate?.getFullYear() || null);
+    const [selectedMonth, setSelectedMonth] = useState(selectedDate?.getMonth() || null);
+
+    // Update state when field value changes
+    useEffect(() => {
+      const date = field.value ? (field.value instanceof Date ? field.value : new Date(field.value)) : null;
+      setSelectedYear(date?.getFullYear() || null);
+      setSelectedMonth(date?.getMonth() || null);
+    }, [field.value]);
+
+    // Validate date before using it
+    const isValidDate = (date) => date instanceof Date && !isNaN(date);
+
+    return (
+      <div>
+        <Label>{label}</Label>
+        <div className="grid grid-cols-2 gap-2 mb-2">
+          <Select
+            value={selectedYear?.toString() ?? ""}
+            onValueChange={(year) => {
+              const yearNum = parseInt(year);
+              setSelectedYear(yearNum);
+              if (selectedMonth !== null) {
+                const newDate = new Date(yearNum, selectedMonth, 1);
+                if (isValidDate(newDate)) {
+                  field.onChange(newDate);
+                }
+              }
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Year" />
+            </SelectTrigger>
+            <SelectContent>
+              {years.map((year) => (
+                <SelectItem key={year} value={year.toString()}>
+                  {year}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={selectedMonth?.toString() ?? ""}
+            onValueChange={(month) => {
+              const monthIndex = parseInt(month);
+              setSelectedMonth(monthIndex);
+              if (selectedYear !== null) {
+                const newDate = new Date(selectedYear, monthIndex, 1);
+                if (isValidDate(newDate)) {
+                  field.onChange(newDate);
+                }
+              }
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Month" />
+            </SelectTrigger>
+            <SelectContent>
+              {months.map((month, index) => (
+                <SelectItem key={month} value={index.toString()}>
+                  {month}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className={cn(
+                "w-full justify-start text-left font-normal",
+                !field.value && "text-muted-foreground"
+              )}
+            >
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {field.value && isValidDate(new Date(field.value)) 
+                ? format(new Date(field.value), "PPP") 
+                : <span>Pick a date</span>
+              }
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="single"
+              selected={field.value && isValidDate(new Date(field.value)) ? new Date(field.value) : null}
+              onSelect={(date) => {
+                field.onChange(date);
+                if (date && isValidDate(date)) {
+                  setSelectedYear(date.getFullYear());
+                  setSelectedMonth(date.getMonth());
+                }
+              }}
+              defaultMonth={selectedYear && selectedMonth !== null ? new Date(selectedYear, selectedMonth) : undefined}
+              disabled={(date) =>
+                date > new Date() || date < new Date(years[years.length - 1], 0, 1)
+              }
+              initialFocus
+            />
+          </PopoverContent>
+        </Popover>
+      </div>
+    );
   };
 
   return (
