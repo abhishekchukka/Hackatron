@@ -181,6 +181,7 @@ const Login = () => {
             > <Link href="/player_signup">Player</Link>
             </Button>
             </div>
+   
             </div>
             
         </div>
