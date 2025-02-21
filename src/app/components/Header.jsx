@@ -35,9 +35,9 @@ export default function Header() {
   };
 
   return (
-    <header className="text-black px-6 py-4 shadow-md">
+    <header className="text-black px-6 py-4 shadow-md bg-white sticky top-0 z-50">
       <div className="flex justify-between items-center max-w-7xl mx-auto">
-        <h1 className="text-xl font-bold">Solo Leveling</h1>
+        <h1 className="text-2xl font-bold">Solo Leveling</h1>
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex space-x-6 items-center">

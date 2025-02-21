@@ -2,7 +2,7 @@
 
 import { Pacifico, Poppins } from "next/font/google";
 import React, { useRef, useState, useEffect } from "react";
-import { loginUser, signupUser, resetPassword } from "../utils/api/auth"; 
+import { loginUser, resetPassword } from "../utils/api/auth"; 
 import toast from "react-hot-toast";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
@@ -27,7 +27,6 @@ const pacifico = Pacifico({
 const Login = () => {
     const emailRef = useRef(null);
     const passwordRef = useRef(null);
-    const [isLogin, setIsLogin] = useState(true);
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [user, setUser] = useState(null);
@@ -68,17 +67,12 @@ const Login = () => {
         }
 
         try {
-            let user;
-            if (isLogin) {
-                user = await loginUser(email, password);
-            } else {
-                user = await signupUser(email, password);
-            }
+            const user = await loginUser(email, password);
 
             if (typeof user === "string" && user.startsWith("Firebase:")) {
                 toast.error(user.replace(/Firebase: auth\/|-/g, " "));
             } else {
-                toast.success(`${isLogin ? "Login" : "Signup"} successful!`);
+                toast.success("Login successful!");
                 router.push("/");
             }
         } catch (error) {
@@ -103,32 +97,10 @@ const Login = () => {
         }
     };
 
-    const handleGoogleLogin = async () => {
-        try {
-            const result = await signInWithPopup(auth, googleProvider);
-            toast.success(`Logged in as ${result.user.displayName}`);
-            router.push("/");
-        } catch (error) {
-            toast.error(error.message || "Google login failed");
-        }
-    };
-
-    const handleFacebookLogin = async () => {
-        try {
-            const result = await signInWithPopup(auth, facebookProvider);
-            toast.success(`Logged in as ${result.user.displayName}`);
-            router.push("/");
-        } catch (error) {
-            toast.error(error.message || "Facebook login failed");
-        }
-    };
-
     return (
         <div className={`${poppins.className} flex items-center justify-center min-h-screen bg-gray-100`}> 
             <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
-                <h2 className={`text-2xl font-bold text-center ${pacifico.className}`}>
-                    {isLogin ? "Login" : "Signup"}
-                </h2>
+                <h2 className={`text-2xl font-bold text-center ${pacifico.className}`}>Login</h2>
                 <form className="space-y-4" onSubmit={handleSubmit}>
                     <div>
                         <label className="block text-sm font-medium text-gray-700">Email</label>
@@ -153,50 +125,23 @@ const Login = () => {
                             {showPassword ? <FaEyeSlash /> : <FaEye />}
                         </button>
                     </div>
-                    {isLogin && (
-                        <div className="text-right">
-                            <button
-                                type="button"
-                                onClick={handleForgotPassword}
-                                className="text-sm text-indigo-600 hover:underline"
-                            >
-                                Forgot Password?
-                            </button>
-                        </div>
-                    )}
+                    <div className="text-right">
+                        <button
+                            type="button"
+                            onClick={handleForgotPassword}
+                            className="text-sm text-indigo-600 hover:underline"
+                        >
+                            Forgot Password?
+                        </button>
+                    </div>
                     <button
                         type="submit"
                         disabled={loading}
-                        className={`w-full px-4 py-2 font-medium text-white rounded-md ${
-                            isLogin
-                                ? "bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-200"
-                                : "bg-green-600 hover:bg-green-700 focus:ring-green-200"
-                        } focus:outline-none focus:ring`}
+                        className="w-full px-4 py-2 font-medium text-white rounded-md bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-200 focus:outline-none focus:ring"
                     >
-                        {loading ? "Processing..." : isLogin ? "Login" : "Signup"}
+                        {loading ? "Processing..." : "Login"}
                     </button>
                 </form>
-                
-                <p className="text-center text-sm text-gray-600">
-                    {isLogin ? "Don't have an account? " : "Already have an account? "}
-                    <button onClick={() => setIsLogin(!isLogin)} className="text-indigo-600 hover:underline">
-                        {isLogin ? "Sign up" : "Log in"}
-                    </button>
-                </p>
-                <div className="flex flex-col space-y-3">
-                    <button
-                        onClick={handleGoogleLogin}
-                        className="flex items-center justify-center w-full px-4 py-2 text-black border rounded-md hover:bg-gray-100"
-                    >
-                        <FcGoogle className="mr-2" /> Sign in with Google
-                    </button>
-                    <button
-                        onClick={handleFacebookLogin}
-                        className="flex items-center justify-center w-full px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700"
-                    >
-                        <FaFacebook className="mr-2" /> Sign in with Facebook
-                    </button>
-                </div>
             </div>
         </div>
     );
