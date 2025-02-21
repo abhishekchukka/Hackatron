@@ -44,7 +44,7 @@ const steps = [
 const defaultValues = {
   // Personal Information
   fullName: "",
-  dateOfBirth: undefined,
+  dateOfBirth: null,
   gender: "",
   email: "",
   phone: "",
@@ -116,7 +116,7 @@ const PlayerSignup = () => {
     reset,
     trigger 
   } = useForm({
-    defaultValues: {}, // Start with empty defaults
+    defaultValues, // Use the defaultValues object directly instead of empty object
     mode: "onChange"
   });
 
@@ -132,56 +132,56 @@ const PlayerSignup = () => {
     switch(step) {
       case 0:
         return {
-          fullName: formData.fullName || "",
-          dateOfBirth: formData.dateOfBirth || undefined,
-          gender: formData.gender || "",
-          email: formData.email || "",
-          phone: formData.phone || "",
-          profilePicture: formData.profilePicture || ""
+          fullName: formData.fullName ?? "",
+          dateOfBirth: formData.dateOfBirth ?? null,
+          gender: formData.gender ?? "",
+          email: formData.email ?? "",
+          phone: formData.phone ?? "",
+          profilePicture: formData.profilePicture ?? ""
         };
       case 1:
         return {
-          primarySport: formData.primarySport || "",
-          secondarySport: formData.secondarySport || "",
-          currentLevel: formData.currentLevel || "",
-          playingExperience: formData.playingExperience || "0",
-          achievements: formData.achievements || "",
-          currentClub: formData.currentClub || "",
-          coachDetails: formData.coachDetails || ""
+          primarySport: formData.primarySport ?? "",
+          secondarySport: formData.secondarySport ?? "",
+          currentLevel: formData.currentLevel ?? "",
+          playingExperience: formData.playingExperience ?? "0",
+          achievements: formData.achievements ?? "",
+          currentClub: formData.currentClub ?? "",
+          coachDetails: formData.coachDetails ?? ""
         };
       case 2:
         return {
-          height: formData.height || "0",
-          weight: formData.weight || "0",
-          dominantSide: formData.dominantSide || "right"
+          height: formData.height ?? "0",
+          weight: formData.weight ?? "0",
+          dominantSide: formData.dominantSide ?? "right"
         };
       case 3:
         return {
-          existingInjuries: formData.existingInjuries || false,
-          medicalConditions: formData.medicalConditions || { asthma: false, diabetes: false, heartCondition: false, other: false },
-          previousSurgeries: formData.previousSurgeries || "",
-          allergies: formData.allergies || "",
-          emergencyContact: formData.emergencyContact || { name: "", relationship: "", phone: "" },
-          dietaryPreferences: formData.dietaryPreferences || "",
-          fitnessCertificate: formData.fitnessCertificate || ""
+          existingInjuries: formData.existingInjuries ?? false,
+          medicalConditions: formData.medicalConditions ?? { asthma: false, diabetes: false, heartCondition: false, other: false },
+          previousSurgeries: formData.previousSurgeries ?? "",
+          allergies: formData.allergies ?? "",
+          emergencyContact: formData.emergencyContact ?? { name: "", relationship: "", phone: "" },
+          dietaryPreferences: formData.dietaryPreferences ?? "",
+          fitnessCertificate: formData.fitnessCertificate ?? ""
         };
       case 4:
         return {
-          careerGoal: formData.careerGoal || "",
-          lookingForCoach: formData.lookingForCoach || false,
-          lookingForTeam: formData.lookingForTeam || false,
-          interestedInSponsorships: formData.interestedInSponsorships || false
+          careerGoal: formData.careerGoal ?? "",
+          lookingForCoach: formData.lookingForCoach ?? false,
+          lookingForTeam: formData.lookingForTeam ?? false,
+          interestedInSponsorships: formData.interestedInSponsorships ?? false
         };
       case 5:
         return {
-          instagram: formData.instagram || "",
-          twitter: formData.twitter || "",
-          youtube: formData.youtube || "",
-          linkedin: formData.linkedin || "",
-          idProof: formData.idProof || "",
-          password: formData.password || "",
-          dataConsent: formData.dataConsent || false,
-          termsAgreed: formData.termsAgreed || false
+          instagram: formData.instagram ?? "",
+          twitter: formData.twitter ?? "",
+          youtube: formData.youtube ?? "",
+          linkedin: formData.linkedin ?? "",
+          idProof: formData.idProof ?? "",
+          password: formData.password ?? "",
+          dataConsent: formData.dataConsent ?? false,
+          termsAgreed: formData.termsAgreed ?? false
         };
       default:
         return {};
@@ -194,14 +194,13 @@ const PlayerSignup = () => {
     const isStepValid = await trigger(fields);
     
     if (isStepValid) {
-      // Save current step data
       const stepData = watch();
       setFormData(prev => ({
         ...prev,
-        ...stepData
+        ...Object.fromEntries(
+          Object.entries(stepData).map(([key, value]) => [key, value ?? null])
+        )
       }));
-      
-      // Move to next step
       setCurrentStep(prev => Math.min(prev + 1, steps.length - 1));
     }
   };
@@ -304,11 +303,14 @@ const PlayerSignup = () => {
               <Controller
                 name="gender"
                 control={control}
-                rules={{ required: "Gender is required" }}
+                defaultValue=""
                 render={({ field }) => (
                   <div>
                     <Label>Gender</Label>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select 
+                      value={field.value ?? ""} 
+                      onValueChange={field.onChange}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select gender" />
                       </SelectTrigger>
