@@ -50,6 +50,7 @@ const defaultValues = {
   gender: "",
   email: "",
   phone: "",
+  address: "",
   profilePicture: "",
 
   // Athletic Background
@@ -256,6 +257,7 @@ const PlayerSignup = () => {
           gender: formData.gender ?? "",
           email: formData.email ?? "",
           phone: formData.phone ?? "",
+          address: formData.address ?? "",
           profilePicture: formData.profilePicture ?? ""
         };
       case 1:
@@ -340,7 +342,7 @@ const PlayerSignup = () => {
       // Create a clean data object for submission
       const submissionData = {
         ...formData,
-        ...currentFormData, // Use the current form data instead of data parameter
+        ...currentFormData,
         dateOfBirth: formData.dateOfBirth ? formData.dateOfBirth.toISOString() : null,
         medicalConditions: formData.medicalConditions || {
           asthma: false,
@@ -353,30 +355,32 @@ const PlayerSignup = () => {
         updatedAt: new Date().toISOString()
       };
 
-      // Validate email and password
-      if (!submissionData.email?.trim()) {
-        throw new Error("Email is required");
-      }
-
-      if (!submissionData.password?.trim()) {
-        throw new Error("Password is required");
-      }
-
-      // Only remove non-essential data
+      // Remove non-essential data
       delete submissionData.confirmPassword;
       delete submissionData.termsAgreed;
 
       // Create user document in Firestore
       const playersRef = collection(db, "players");
       const playerDoc = doc(playersRef, submissionData.email.toLowerCase().trim());
-      await setDoc(playerDoc, submissionData);
 
-      toast.success("Registration successful!");
-      // router.push('/login');
-      
+      // Use toast.promise to show loading, success, and error states
+      await toast.promise(
+        setDoc(playerDoc, submissionData),
+        {
+          loading: 'Creating your account...',
+          success: () => {
+            router.push('/login');
+            return 'Registration successful! Please login to continue.';
+          },
+          error: 'Failed to create account. Please try again.'
+        }
+      );
+
     } catch (error) {
       console.error("Error submitting form:", error);
-      toast.error(error.message || "Failed to submit form. Please try again.");
+      toast.error("Registration failed", {
+        description: error.message || "Please try again"
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -469,6 +473,27 @@ const PlayerSignup = () => {
                     <Input id="phone" type="tel" placeholder="Enter your phone number" {...field} />
                     {errors.phone && (
                       <span className="text-sm text-red-500">{errors.phone.message}</span>
+                    )}
+                  </div>
+                )}
+              />
+
+              <Controller
+                name="address"
+                control={control}
+                defaultValue=""
+                rules={{ required: "Address is required" }}
+                render={({ field }) => (
+                  <div>
+                    <Label>Address</Label>
+                    <Input 
+                      {...field}
+                      value={field.value ?? ""}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      placeholder="Enter your address"
+                    />
+                    {errors.address && (
+                      <span className="text-sm text-red-500">{errors.address.message}</span>
                     )}
                   </div>
                 )}
