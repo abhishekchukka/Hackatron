@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -18,25 +18,25 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-
 export default function RootLayout({ children }) {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-      const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-          setUser(currentUser);
-          localStorage.setItem('user', JSON.stringify(currentUser));
-      });
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      localStorage.setItem("user", JSON.stringify(currentUser));
+    });
 
-      return () => unsubscribe();
+    return () => unsubscribe();
   }, []);
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Toaster position="top-center"/>
-        <Header user={user}/>
+        <Toaster position="top-center" />
+        <Header user={user} />
+
         {children}
       </body>
     </html>
