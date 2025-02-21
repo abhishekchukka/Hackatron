@@ -100,7 +100,7 @@ export default function Header() {
               Logout
             </button>
           ) : (
-            <Link href="/login" className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-lg">Login</Link>
+            <Link href="/login" className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-lg" onClick={() => setMenuOpen(false)}>Login</Link>
           )}
         </nav>
       )}

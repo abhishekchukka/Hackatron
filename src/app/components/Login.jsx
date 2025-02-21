@@ -11,8 +11,8 @@ import { auth } from "../utils/firebase";
 import { onAuthStateChanged, signInWithPopup } from "firebase/auth";
 import { googleProvider, facebookProvider } from "../utils/firebase";
 import { useRouter } from "next/navigation"; 
-import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 const poppins = Poppins({
     subsets: ["latin"],
@@ -98,6 +98,26 @@ const Login = () => {
             toast.error(error.message || "Error sending reset email");
         }
     };
+
+    // const handleGoogleLogin = async () => {
+    //     try {
+    //         const result = await signInWithPopup(auth, googleProvider);
+    //         toast.success(`Logged in as ${result.user.displayName}`);
+    //         router.push("/");
+    //     } catch (error) {
+    //         toast.error(error.message || "Google login failed");
+    //     }
+    // };
+
+    // const handleFacebookLogin = async () => {
+    //     try {
+    //         const result = await signInWithPopup(auth, facebookProvider);
+    //         toast.success(`Logged in as ${result.user.displayName}`);
+    //         router.push("/");
+    //     } catch (error) {
+    //         toast.error(error.message || "Facebook login failed");
+    //     }
+    // };
 
     return (
         <div className={`${poppins.className} flex items-center justify-center min-h-screen bg-gray-100`}> 
