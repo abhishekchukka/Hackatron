@@ -774,20 +774,9 @@ const CoachSignup = () => {
       "July", "August", "September", "October", "November", "December"
     ];
 
-    // Ensure the date is properly parsed
-    const selectedDate = field.value ? (field.value instanceof Date ? field.value : new Date(field.value)) : null;
+    const selectedDate = field.value ? new Date(field.value) : null;
     const [selectedYear, setSelectedYear] = useState(selectedDate?.getFullYear() || null);
     const [selectedMonth, setSelectedMonth] = useState(selectedDate?.getMonth() || null);
-
-    // Update state when field value changes
-    useEffect(() => {
-      const date = field.value ? (field.value instanceof Date ? field.value : new Date(field.value)) : null;
-      setSelectedYear(date?.getFullYear() || null);
-      setSelectedMonth(date?.getMonth() || null);
-    }, [field.value]);
-
-    // Validate date before using it
-    const isValidDate = (date) => date instanceof Date && !isNaN(date);
 
     return (
       <div>
@@ -800,9 +789,7 @@ const CoachSignup = () => {
               setSelectedYear(yearNum);
               if (selectedMonth !== null) {
                 const newDate = new Date(yearNum, selectedMonth, 1);
-                if (isValidDate(newDate)) {
-                  field.onChange(newDate);
-                }
+                field.onChange(newDate);
               }
             }}
           >
@@ -825,9 +812,7 @@ const CoachSignup = () => {
               setSelectedMonth(monthIndex);
               if (selectedYear !== null) {
                 const newDate = new Date(selectedYear, monthIndex, 1);
-                if (isValidDate(newDate)) {
-                  field.onChange(newDate);
-                }
+                field.onChange(newDate);
               }
             }}
           >
@@ -853,19 +838,16 @@ const CoachSignup = () => {
               )}
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
-              {field.value && isValidDate(new Date(field.value)) 
-                ? format(new Date(field.value), "PPP") 
-                : <span>Pick a date</span>
-              }
+              {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="start">
             <Calendar
               mode="single"
-              selected={field.value && isValidDate(new Date(field.value)) ? new Date(field.value) : null}
+              selected={field.value}
               onSelect={(date) => {
                 field.onChange(date);
-                if (date && isValidDate(date)) {
+                if (date) {
                   setSelectedYear(date.getFullYear());
                   setSelectedMonth(date.getMonth());
                 }

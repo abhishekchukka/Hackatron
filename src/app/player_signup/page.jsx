@@ -50,6 +50,7 @@ const defaultValues = {
   gender: "",
   email: "",
   phone: "",
+  address: "",
   profilePicture: "",
 
   // Athletic Background
@@ -256,6 +257,7 @@ const PlayerSignup = () => {
           gender: formData.gender ?? "",
           email: formData.email ?? "",
           phone: formData.phone ?? "",
+          address: formData.address ?? "",
           profilePicture: formData.profilePicture ?? ""
         };
       case 1:
@@ -469,6 +471,27 @@ const PlayerSignup = () => {
                     <Input id="phone" type="tel" placeholder="Enter your phone number" {...field} />
                     {errors.phone && (
                       <span className="text-sm text-red-500">{errors.phone.message}</span>
+                    )}
+                  </div>
+                )}
+              />
+
+              <Controller
+                name="address"
+                control={control}
+                defaultValue=""
+                rules={{ required: "Address is required" }}
+                render={({ field }) => (
+                  <div>
+                    <Label>Address</Label>
+                    <Input 
+                      {...field}
+                      value={field.value ?? ""}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      placeholder="Enter your address"
+                    />
+                    {errors.address && (
+                      <span className="text-sm text-red-500">{errors.address.message}</span>
                     )}
                   </div>
                 )}
