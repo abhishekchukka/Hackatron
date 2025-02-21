@@ -4,7 +4,7 @@ import { Trophy } from "lucide-react"
 export function Footer() {
   return (
     (<footer className="w-full border-t bg-background">
-      <div className="container flex flex-col gap-6 py-8 md:py-12">
+      <div className="container flex flex-col gap-6 py-8 md:py-12 mx-auto px-4 md:px-[5%]">
         <div className="flex flex-col gap-6 md:flex-row md:justify-between">
           <div className="space-y-4">
             <Link href="/" className="flex items-center space-x-2">

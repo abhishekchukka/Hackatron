@@ -2,7 +2,7 @@
 
 import { Pacifico, Poppins } from "next/font/google";
 import React, { useRef, useState, useEffect } from "react";
-import { loginUser, signupUser, resetPassword } from "../utils/api/auth"; 
+import { loginUser, resetPassword } from "../utils/api/auth"; 
 import toast from "react-hot-toast";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
@@ -29,7 +29,6 @@ const pacifico = Pacifico({
 const Login = () => {
     const emailRef = useRef(null);
     const passwordRef = useRef(null);
-    const [isLogin, setIsLogin] = useState(true);
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [user, setUser] = useState(null);
@@ -70,17 +69,12 @@ const Login = () => {
         }
 
         try {
-            let user;
-            if (isLogin) {
-                user = await loginUser(email, password);
-            } else {
-                user = await signupUser(email, password);
-            }
+            const user = await loginUser(email, password);
 
             if (typeof user === "string" && user.startsWith("Firebase:")) {
                 toast.error(user.replace(/Firebase: auth\/|-/g, " "));
             } else {
-                toast.success(`${isLogin ? "Login" : "Signup"} successful!`);
+                toast.success("Login successful!");
                 router.push("/");
             }
         } catch (error) {
@@ -128,9 +122,7 @@ const Login = () => {
     return (
         <div className={`${poppins.className} flex items-center justify-center min-h-screen bg-gray-100`}> 
             <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
-                <h2 className={`text-2xl font-bold text-center ${pacifico.className}`}>
-                    {isLogin ? "Login" : "Signup"}
-                </h2>
+                <h2 className={`text-2xl font-bold text-center ${pacifico.className}`}>Login</h2>
                 <form className="space-y-4" onSubmit={handleSubmit}>
                     <div>
                         <label className="block text-sm font-medium text-gray-700">Email</label>
@@ -155,45 +147,43 @@ const Login = () => {
                             {showPassword ? <FaEyeSlash /> : <FaEye />}
                         </button>
                     </div>
-                    {isLogin && (
-                        <div className="text-right">
-                            <button
-                                type="button"
-                                onClick={handleForgotPassword}
-                                className="text-sm text-indigo-600 hover:underline"
-                            >
-                                Forgot Password?
-                            </button>
-                        </div>
-                    )}
-                   <Button size="lg" className="px-8 w-full">Login</Button>
-                        
-                    
-                </form>
-                
-                <p className="text-center text-sm text-gray-600">
-                    Don't have an account? Register now!
-                    <div className="flex justify-center gap-4 mt-3">
-                        <Link 
-                            href="/signup"
-                           
+                    <div className="text-right">
+                        <button
+                            type="button"
+                            onClick={handleForgotPassword}
+                            className="text-sm text-indigo-600 hover:underline"
                         >
-                           <Button size="lg" className="px-8">
-                Player
-              </Button>
-                        </Link>
-                        <Link 
-                            href="/signup"
-                            
-                        >
-                            <Button size="lg" variant="outline" className="px-8">
-                Coach
-              </Button>
-                        </Link>
+                            Forgot Password?
+                        </button>
                     </div>
-                </p>
-               
+                    <Button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full px-4 py-2 font-medium text-white rounded-md"
+                    >
+                        {loading ? "Processing..." : "Login"}
+                    </Button>
+                </form>
+                <div className="flex items-center justify-center mt-4">
+                    <span className="text-sm text-gray-500">Do you have an account? Register Now!</span>
+                </div>
+                <div className="flex flex-col lg:flex-row gap-4 mt-2">
+            
+            <Button     
+                    variant="outline"
+                    disabled={loading}
+                    className="w-full px-4 py-2 font-medium rounded-md w-full lg:w-1/2"
+            ><Link href="/coach_signup">Coach</Link>
+            </Button>
+            <Button
+                        disabled={loading}
+                        className="w-full px-4 py-2 font-medium text-white rounded-md w-full lg:w-1/2"
+            > <Link href="/player_signup">Player</Link>
+            </Button>
             </div>
+   
+            </div>
+            
         </div>
     );
 };

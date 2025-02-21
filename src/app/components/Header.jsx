@@ -7,6 +7,14 @@ import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth } from "../utils/firebase";
+import { Poppins } from "next/font/google";
+
+const poppins = Poppins({
+    subsets: ["latin"],
+    weight: ["400"],
+    display: "swap",
+});
+
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -35,9 +43,9 @@ export default function Header() {
   };
 
   return (
-    <header className="text-black px-6 py-4 shadow-md">
+    <header className="text-black px-6 py-4 shadow-md bg-white sticky top-0 z-50">
       <div className="flex justify-between items-center max-w-7xl mx-auto">
-        <h1 className="text-xl font-bold">Solo Leveling</h1>
+        <h1 className={`text-2xl font-bold ${poppins.clas}`}>Solo Leveling</h1>
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex space-x-6 items-center">
@@ -92,7 +100,7 @@ export default function Header() {
               Logout
             </button>
           ) : (
-            <Link href="/login" className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-lg">Login</Link>
+            <Link href="/login" className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-lg" onClick={() => setMenuOpen(false)}>Login</Link>
           )}
         </nav>
       )}
