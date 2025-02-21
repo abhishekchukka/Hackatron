@@ -2,7 +2,7 @@
 
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { Toaster } from "react-hot-toast";
+import { Toaster } from "sonner";
 import Header from "./components/Header";
 import { Provider } from "react-redux";
 import appStore from "./utils/store/appStore";
@@ -29,7 +29,7 @@ export default function RootLayout({ children }) {
       >
         <AOSProvider>
         <Provider store={appStore}>
-           <Toaster />
+           <Toaster position="top-center" richColors />
            <Header />
         {children}
         </Provider>
