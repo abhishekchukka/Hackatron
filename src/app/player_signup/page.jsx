@@ -106,85 +106,133 @@ const defaultValues = {
 const PlayerSignup = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+  const [formData, setFormData] = useState(defaultValues); // Store complete form data
+
   const { 
     control, 
     handleSubmit, 
     formState: { errors }, 
-    watch, 
-    setValue,
+    watch,
     reset,
     trigger 
   } = useForm({
-    defaultValues,
+    defaultValues: {}, // Start with empty defaults
     mode: "onChange"
   });
 
-  // Reset form when component mounts
+  // Reset form when step changes
   useEffect(() => {
-    reset(defaultValues);
-  }, [reset]);
+    // Get the default values for current step
+    const stepDefaults = getStepFields(currentStep);
+    reset(stepDefaults);
+  }, [currentStep, reset]);
 
-  // Clear form data when unmounting
-  useEffect(() => {
-    return () => {
-      reset(defaultValues);
-    };
-  }, [reset]);
-
-  // Add validation between steps
-  const handleNextStep = async () => {
-    let fieldsToValidate = [];
-    
-    switch (currentStep) {
+  // Function to get fields for each step
+  const getStepFields = (step) => {
+    switch(step) {
       case 0:
-        fieldsToValidate = ['fullName', 'dateOfBirth', 'gender', 'email', 'phone'];
-        break;
+        return {
+          fullName: formData.fullName || "",
+          dateOfBirth: formData.dateOfBirth || undefined,
+          gender: formData.gender || "",
+          email: formData.email || "",
+          phone: formData.phone || "",
+          profilePicture: formData.profilePicture || ""
+        };
       case 1:
-        fieldsToValidate = ['primarySport', 'currentLevel'];
-        break;
+        return {
+          primarySport: formData.primarySport || "",
+          secondarySport: formData.secondarySport || "",
+          currentLevel: formData.currentLevel || "",
+          playingExperience: formData.playingExperience || "0",
+          achievements: formData.achievements || "",
+          currentClub: formData.currentClub || "",
+          coachDetails: formData.coachDetails || ""
+        };
       case 2:
-        fieldsToValidate = ['height', 'weight', 'dominantSide'];
-        break;
+        return {
+          height: formData.height || "0",
+          weight: formData.weight || "0",
+          dominantSide: formData.dominantSide || "right"
+        };
       case 3:
-        fieldsToValidate = ['emergencyContact.name', 'emergencyContact.phone'];
-        break;
+        return {
+          existingInjuries: formData.existingInjuries || false,
+          medicalConditions: formData.medicalConditions || { asthma: false, diabetes: false, heartCondition: false, other: false },
+          previousSurgeries: formData.previousSurgeries || "",
+          allergies: formData.allergies || "",
+          emergencyContact: formData.emergencyContact || { name: "", relationship: "", phone: "" },
+          dietaryPreferences: formData.dietaryPreferences || "",
+          fitnessCertificate: formData.fitnessCertificate || ""
+        };
       case 4:
-        fieldsToValidate = ['careerGoal'];
-        break;
+        return {
+          careerGoal: formData.careerGoal || "",
+          lookingForCoach: formData.lookingForCoach || false,
+          lookingForTeam: formData.lookingForTeam || false,
+          interestedInSponsorships: formData.interestedInSponsorships || false
+        };
       case 5:
-        fieldsToValidate = ['password', 'termsAgreed', 'dataConsent'];
-        break;
+        return {
+          instagram: formData.instagram || "",
+          twitter: formData.twitter || "",
+          youtube: formData.youtube || "",
+          linkedin: formData.linkedin || "",
+          idProof: formData.idProof || "",
+          password: formData.password || "",
+          dataConsent: formData.dataConsent || false,
+          termsAgreed: formData.termsAgreed || false
+        };
+      default:
+        return {};
     }
+  };
 
-    const isStepValid = await trigger(fieldsToValidate);
+  // Handle next step with validation
+  const handleNextStep = async () => {
+    const fields = Object.keys(getStepFields(currentStep));
+    const isStepValid = await trigger(fields);
+    
     if (isStepValid) {
+      // Save current step data
+      const stepData = watch();
+      setFormData(prev => ({
+        ...prev,
+        ...stepData
+      }));
+      
+      // Move to next step
       setCurrentStep(prev => Math.min(prev + 1, steps.length - 1));
     }
   };
 
-  // Get the current date value from the form
-  const dateOfBirth = watch('dateOfBirth');
+  // Handle previous step
+  const handlePreviousStep = () => {
+    setCurrentStep(prev => Math.max(prev - 1, 0));
+  };
 
+  // Handle final submission
   const onSubmit = async (data) => {
     try {
       setIsSubmitting(true);
       
-      const submissionData = {
+      // Combine all data
+      const finalData = {
+        ...formData,
         ...data,
-        dateOfBirth: data.dateOfBirth ? data.dateOfBirth.toISOString() : "",
-        height: Number(data.height) || 0,
-        weight: Number(data.weight) || 0,
-        playingExperience: Number(data.playingExperience) || 0,
+        dateOfBirth: formData.dateOfBirth ? formData.dateOfBirth.toISOString() : "",
+        height: Number(formData.height) || 0,
+        weight: Number(formData.weight) || 0,
+        playingExperience: Number(formData.playingExperience) || 0,
         status: "pending",
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
 
-      delete submissionData.dataConsent;
+      delete finalData.dataConsent;
 
-      const playerRef = doc(db, "players", data.email);
-      await setDoc(playerRef, submissionData);
+      const playerRef = doc(db, "players", finalData.email);
+      await setDoc(playerRef, finalData);
 
       toast.success("Registration successful! Please wait for approval.");
     } catch (error) {
@@ -931,35 +979,88 @@ const PlayerSignup = () => {
         );
 
       case 6:
-        const formData = watch(); // Get all form values for review
         return (
           <div className="space-y-4">
             <h2 className="text-2xl font-bold">Review Your Information</h2>
             <div className="grid gap-6">
               {/* Personal Information */}
-              <div>
+              <div className="bg-gray-50 p-4 rounded-lg">
                 <h3 className="font-semibold mb-2">Personal Information</h3>
                 <div className="grid gap-2 text-sm">
                   <p><span className="font-medium">Name:</span> {formData.fullName}</p>
                   <p><span className="font-medium">Email:</span> {formData.email}</p>
                   <p><span className="font-medium">Phone:</span> {formData.phone}</p>
                   <p><span className="font-medium">Gender:</span> {formData.gender}</p>
-                  <p><span className="font-medium">Date of Birth:</span> {formData.dateOfBirth ? format(formData.dateOfBirth, "PPP") : "Not set"}</p>
+                  <p>
+                    <span className="font-medium">Date of Birth:</span> 
+                    {formData.dateOfBirth ? format(new Date(formData.dateOfBirth), "PPP") : "Not provided"}
+                  </p>
                 </div>
               </div>
 
               {/* Athletic Background */}
-              <div>
+              <div className="bg-gray-50 p-4 rounded-lg">
                 <h3 className="font-semibold mb-2">Athletic Background</h3>
                 <div className="grid gap-2 text-sm">
                   <p><span className="font-medium">Primary Sport:</span> {formData.primarySport}</p>
+                  <p><span className="font-medium">Secondary Sport:</span> {formData.secondarySport || "Not provided"}</p>
                   <p><span className="font-medium">Current Level:</span> {formData.currentLevel}</p>
                   <p><span className="font-medium">Experience:</span> {formData.playingExperience} years</p>
-                  <p><span className="font-medium">Current Club:</span> {formData.currentClub}</p>
+                  <p><span className="font-medium">Current Club:</span> {formData.currentClub || "Not provided"}</p>
+                  <p><span className="font-medium">Coach Details:</span> {formData.coachDetails || "Not provided"}</p>
                 </div>
               </div>
 
-              {/* Add more sections for other form parts */}
+              {/* Physical Attributes */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h3 className="font-semibold mb-2">Physical Attributes</h3>
+                <div className="grid gap-2 text-sm">
+                  <p><span className="font-medium">Height:</span> {formData.height} cm</p>
+                  <p><span className="font-medium">Weight:</span> {formData.weight} kg</p>
+                  <p><span className="font-medium">Dominant Side:</span> {formData.dominantSide}</p>
+                  <p><span className="font-medium">Blood Group:</span> {formData.bloodGroup || "Not provided"}</p>
+                  <p><span className="font-medium">Fitness Level:</span> {formData.fitnessLevel || "Not provided"}</p>
+                </div>
+              </div>
+
+              {/* Medical & Health */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h3 className="font-semibold mb-2">Medical & Health</h3>
+                <div className="grid gap-2 text-sm">
+                  <p><span className="font-medium">Existing Injuries:</span> {formData.existingInjuries ? "Yes" : "No"}</p>
+                  <p><span className="font-medium">Medical Conditions:</span></p>
+                  <ul className="list-disc list-inside pl-4">
+                    {formData.medicalConditions?.asthma && <li>Asthma</li>}
+                    {formData.medicalConditions?.diabetes && <li>Diabetes</li>}
+                    {formData.medicalConditions?.heartCondition && <li>Heart Condition</li>}
+                    {formData.medicalConditions?.other && <li>Other</li>}
+                  </ul>
+                  <p><span className="font-medium">Allergies:</span> {formData.allergies || "None"}</p>
+                  <p><span className="font-medium">Dietary Preferences:</span> {formData.dietaryPreferences || "Not specified"}</p>
+                </div>
+              </div>
+
+              {/* Career Goals */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h3 className="font-semibold mb-2">Career Goals</h3>
+                <div className="grid gap-2 text-sm">
+                  <p><span className="font-medium">Career Goal:</span> {formData.careerGoal}</p>
+                  <p><span className="font-medium">Looking for Coach:</span> {formData.lookingForCoach ? "Yes" : "No"}</p>
+                  <p><span className="font-medium">Looking for Team:</span> {formData.lookingForTeam ? "Yes" : "No"}</p>
+                  <p><span className="font-medium">Interested in Sponsorships:</span> {formData.interestedInSponsorships ? "Yes" : "No"}</p>
+                </div>
+              </div>
+
+              {/* Social Media */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h3 className="font-semibold mb-2">Social Media</h3>
+                <div className="grid gap-2 text-sm">
+                  <p><span className="font-medium">Instagram:</span> {formData.instagram || "Not provided"}</p>
+                  <p><span className="font-medium">Twitter:</span> {formData.twitter || "Not provided"}</p>
+                  <p><span className="font-medium">YouTube:</span> {formData.youtube || "Not provided"}</p>
+                  <p><span className="font-medium">LinkedIn:</span> {formData.linkedin || "Not provided"}</p>
+                </div>
+              </div>
             </div>
           </div>
         );
@@ -996,7 +1097,7 @@ const PlayerSignup = () => {
           <Button
             type="button"
             variant="outline"
-            onClick={() => setCurrentStep(prev => Math.max(prev - 1, 0))}
+            onClick={handlePreviousStep}
             disabled={currentStep === 0 || isSubmitting}
           >
             Previous
