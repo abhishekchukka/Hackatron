@@ -11,6 +11,8 @@ import { auth } from "../utils/firebase";
 import { onAuthStateChanged, signInWithPopup } from "firebase/auth";
 import { googleProvider, facebookProvider } from "../utils/firebase";
 import { useRouter } from "next/navigation"; 
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 const poppins = Poppins({
     subsets: ["latin"],
@@ -134,15 +136,33 @@ const Login = () => {
                             Forgot Password?
                         </button>
                     </div>
-                    <button
+                    <Button
                         type="submit"
                         disabled={loading}
-                        className="w-full px-4 py-2 font-medium text-white rounded-md bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-200 focus:outline-none focus:ring"
+                        className="w-full px-4 py-2 font-medium text-white rounded-md"
                     >
                         {loading ? "Processing..." : "Login"}
-                    </button>
+                    </Button>
                 </form>
+                <div className="flex items-center justify-center mt-4">
+                    <span className="text-sm text-gray-500">Do you have an account? Register Now!</span>
+                </div>
+                <div className="flex flex-col lg:flex-row gap-4 mt-2">
+            
+            <Button     
+                    variant="outline"
+                    disabled={loading}
+                    className="w-full px-4 py-2 font-medium rounded-md w-full lg:w-1/2"
+            ><Link href="/coach_signup">Coach</Link>
+            </Button>
+            <Button
+                        disabled={loading}
+                        className="w-full px-4 py-2 font-medium text-white rounded-md w-full lg:w-1/2"
+            > <Link href="/player_signup">Player</Link>
+            </Button>
             </div>
+            </div>
+            
         </div>
     );
 };
