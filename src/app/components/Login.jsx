@@ -11,6 +11,8 @@ import { auth } from "../utils/firebase";
 import { onAuthStateChanged, signInWithPopup } from "firebase/auth";
 import { googleProvider, facebookProvider } from "../utils/firebase";
 import { useRouter } from "next/navigation"; 
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 const poppins = Poppins({
     subsets: ["latin"],
@@ -103,25 +105,25 @@ const Login = () => {
         }
     };
 
-    const handleGoogleLogin = async () => {
-        try {
-            const result = await signInWithPopup(auth, googleProvider);
-            toast.success(`Logged in as ${result.user.displayName}`);
-            router.push("/");
-        } catch (error) {
-            toast.error(error.message || "Google login failed");
-        }
-    };
+    // const handleGoogleLogin = async () => {
+    //     try {
+    //         const result = await signInWithPopup(auth, googleProvider);
+    //         toast.success(`Logged in as ${result.user.displayName}`);
+    //         router.push("/");
+    //     } catch (error) {
+    //         toast.error(error.message || "Google login failed");
+    //     }
+    // };
 
-    const handleFacebookLogin = async () => {
-        try {
-            const result = await signInWithPopup(auth, facebookProvider);
-            toast.success(`Logged in as ${result.user.displayName}`);
-            router.push("/");
-        } catch (error) {
-            toast.error(error.message || "Facebook login failed");
-        }
-    };
+    // const handleFacebookLogin = async () => {
+    //     try {
+    //         const result = await signInWithPopup(auth, facebookProvider);
+    //         toast.success(`Logged in as ${result.user.displayName}`);
+    //         router.push("/");
+    //     } catch (error) {
+    //         toast.error(error.message || "Facebook login failed");
+    //     }
+    // };
 
     return (
         <div className={`${poppins.className} flex items-center justify-center min-h-screen bg-gray-100`}> 
@@ -164,39 +166,33 @@ const Login = () => {
                             </button>
                         </div>
                     )}
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className={`w-full px-4 py-2 font-medium text-white rounded-md ${
-                            isLogin
-                                ? "bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-200"
-                                : "bg-green-600 hover:bg-green-700 focus:ring-green-200"
-                        } focus:outline-none focus:ring`}
-                    >
-                        {loading ? "Processing..." : isLogin ? "Login" : "Signup"}
-                    </button>
+                   <Button size="lg" className="px-8 w-full">Login</Button>
+                        
+                    
                 </form>
                 
                 <p className="text-center text-sm text-gray-600">
-                    {isLogin ? "Don't have an account? " : "Already have an account? "}
-                    <button onClick={() => setIsLogin(!isLogin)} className="text-indigo-600 hover:underline">
-                        {isLogin ? "Sign up" : "Log in"}
-                    </button>
+                    Don't have an account? Register now!
+                    <div className="flex justify-center gap-4 mt-3">
+                        <Link 
+                            href="/signup"
+                           
+                        >
+                           <Button size="lg" className="px-8">
+                Player
+              </Button>
+                        </Link>
+                        <Link 
+                            href="/signup"
+                            
+                        >
+                            <Button size="lg" variant="outline" className="px-8">
+                Coach
+              </Button>
+                        </Link>
+                    </div>
                 </p>
-                <div className="flex flex-col space-y-3">
-                    <button
-                        onClick={handleGoogleLogin}
-                        className="flex items-center justify-center w-full px-4 py-2 text-black border rounded-md hover:bg-gray-100"
-                    >
-                        <FcGoogle className="mr-2" /> Sign in with Google
-                    </button>
-                    <button
-                        onClick={handleFacebookLogin}
-                        className="flex items-center justify-center w-full px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700"
-                    >
-                        <FaFacebook className="mr-2" /> Sign in with Facebook
-                    </button>
-                </div>
+               
             </div>
         </div>
     );
