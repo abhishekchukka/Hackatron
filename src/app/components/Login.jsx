@@ -94,6 +94,7 @@ const Login = () => {
 
         // ✅ Redirect based on role
         router.push(result.role === "coach" ? "/coach_dashboard" : "/player_dashboard");
+        window.location.href = result.role === "coach" ? "/coach_dashboard" : "/player_dashboard";
         toast.success(`Logged in as ${result.role}`);
 
         setLoading(false);
