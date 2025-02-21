@@ -311,18 +311,37 @@ const PlayerSignup = () => {
 
   // Handle next step with validation
   const handleNextStep = async () => {
-    const fields = Object.keys(getStepFields(currentStep));
-    const isStepValid = await trigger(fields);
+    let fieldsToValidate = [];
     
-    if (isStepValid) {
+    switch (currentStep) {
+      case 0:
+        fieldsToValidate = ['fullName', 'dateOfBirth', 'gender', 'email', 'phone', 'address'];
+        break;
+      case 1:
+        fieldsToValidate = ['primarySport', 'currentLevel', 'playingExperience'];
+        break;
+      case 2:
+        fieldsToValidate = ['height', 'weight', 'dominantSide'];
+        break;
+      case 3:
+        fieldsToValidate = ['emergencyContact.name', 'emergencyContact.phone'];
+        break;
+      case 4:
+        fieldsToValidate = ['careerGoal'];
+        break;
+      case 5:
+        fieldsToValidate = ['password'];
+        break;
+    }
+
+    const isStepValid = await trigger(fieldsToValidate);
+    if (isStepValid && currentStep < steps.length - 1) {
       const stepData = watch();
       setFormData(prev => ({
         ...prev,
-        ...Object.fromEntries(
-          Object.entries(stepData).map(([key, value]) => [key, value ?? null])
-        )
+        ...stepData
       }));
-      setCurrentStep(prev => Math.min(prev + 1, steps.length - 1));
+      setCurrentStep(prev => prev + 1);
     }
   };
 
@@ -335,14 +354,23 @@ const PlayerSignup = () => {
   const onSubmit = async (data) => {
     try {
       setIsSubmitting(true);
-      
-      // Get the current form data
-      const currentFormData = watch();
-      
-      // Create a clean data object for submission
+
+      // Validate password
+      if (!data.password?.trim()) {
+        toast.error("Password is required");
+        return;
+      }
+
+      if (data.password.length < 8) {
+        toast.error("Password must be at least 8 characters");
+        return;
+      }
+
+      // Create submission data
       const submissionData = {
         ...formData,
-        ...currentFormData,
+        ...data, // This ensures we get the latest form data including password
+        password: data.password, // Explicitly set password
         dateOfBirth: formData.dateOfBirth ? formData.dateOfBirth.toISOString() : null,
         medicalConditions: formData.medicalConditions || {
           asthma: false,
@@ -358,29 +386,20 @@ const PlayerSignup = () => {
       // Remove non-essential data
       delete submissionData.confirmPassword;
       delete submissionData.termsAgreed;
+      delete submissionData.dataConsent;
 
-      // Create user document in Firestore
+      // Log the data to verify password is included
+      console.log("Submitting data:", submissionData);
+
       const playersRef = collection(db, "players");
       const playerDoc = doc(playersRef, submissionData.email.toLowerCase().trim());
+      await setDoc(playerDoc, submissionData);
 
-      // Use toast.promise to show loading, success, and error states
-      await toast.promise(
-        setDoc(playerDoc, submissionData),
-        {
-          loading: 'Creating your account...',
-          success: () => {
-            router.push('/login');
-            return 'Registration successful! Please login to continue.';
-          },
-          error: 'Failed to create account. Please try again.'
-        }
-      );
+      toast.success("Registration successful!");
 
     } catch (error) {
       console.error("Error submitting form:", error);
-      toast.error("Registration failed", {
-        description: error.message || "Please try again"
-      });
+      toast.error(error.message || "Failed to submit form. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -1060,9 +1079,11 @@ const PlayerSignup = () => {
               <Controller
                 name="password"
                 control={control}
-                defaultValue=""
                 rules={{ 
-                  required: "Password is required",
+                  required: {
+                    value: true,
+                    message: "Password is required"
+                  },
                   minLength: {
                     value: 8,
                     message: "Password must be at least 8 characters"
@@ -1073,10 +1094,9 @@ const PlayerSignup = () => {
                     <Label>Password</Label>
                     <Input 
                       type="password" 
+                      required
                       placeholder="Enter your password"
                       {...field}
-                      value={field.value ?? ""}
-                      onChange={(e) => field.onChange(e.target.value)}
                     />
                     {errors.password && (
                       <span className="text-sm text-red-500">{errors.password.message}</span>
@@ -1256,7 +1276,7 @@ const PlayerSignup = () => {
             {isSubmitting 
               ? "Submitting..." 
               : currentStep === steps.length - 1 
-                ? "Submit" 
+                ? "Submit Registration"
                 : "Next"
             }
           </Button>

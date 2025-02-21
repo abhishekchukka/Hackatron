@@ -121,13 +121,13 @@ const Login = () => {
                             ref={passwordRef}
                             className="w-full px-3 py-2 mt-1 border rounded-md focus:outline-none focus:ring focus:ring-indigo-200 pr-10"
                         />
-                        <button
+                        {/* <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
                             className="absolute right-3 top-10 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
                         >
                             {showPassword ? <FaEyeSlash /> : <FaEye />}
-                        </button>
+                        </button> */}
                     </div>
                     <div className="text-right">
                         <button
