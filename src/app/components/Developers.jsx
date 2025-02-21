@@ -3,14 +3,14 @@ import Image from "next/image";
 const About = () => {
     return (
         <div className="flex flex-col items-center justify-center px-4 sm:px-6 py-12 bg-gray-100">
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6 text-center">About Our Journey</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-24 text-center">About Our Journey</h2>
             
             {/* Image Grid */}
             <div className="container grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 gap-4 w-full max-w-4xl mx-auto">
-                <Image src="/hemanth.jpg" alt="Project Development" width={400} height={300} className="rounded-lg shadow-md w-48 h-48 rounded-full" />
-                <Image src="/chukka.jpg" alt="Team Collaboration" width={400} height={300} className="rounded-lg shadow-md w-48 h-48 rounded-full" />
-                <Image src="/santosh.jpg" alt="Final Application" width={400} height={300} className="rounded-lg shadow-md w-48 h-48 rounded-full" />
-                <Image src="/Adhil.jpg" alt="Final Application" width={400} height={300} className="rounded-lg shadow-md w-48 h-48 rounded-full" />
+                <Image src="/hemanth.jpg" alt="Project Development" width={400} height={300} className="rounded-lg shadow-md w-48 h-48 rounded-full" data-aos="flip-left" data-aos-duration="2000" />
+                <Image src="/chukka.jpg" alt="Team Collaboration" width={400} height={300} className="rounded-lg shadow-md w-48 h-48 rounded-full" data-aos="flip-left" data-aos-duration="2000" />
+                <Image src="/santosh.jpg" alt="Final Application" width={400} height={300} className="rounded-lg shadow-md w-48 h-48 rounded-full" data-aos="flip-left" data-aos-duration="2000" />
+                <Image src="/Adhil.jpg" alt="Final Application" width={400} height={300} className="rounded-lg shadow-md w-48 h-48 rounded-full" data-aos="flip-left" data-aos-duration="2000" />
             </div>
             
             {/* Description */}

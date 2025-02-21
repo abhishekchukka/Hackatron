@@ -57,6 +57,8 @@ export default function Header() {
 
                 {dropdownOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 py-1">
+                    {!user.coachingLevel && <Link href="/player_dashboard" className="w-full px-3 py-2 text-gray-700 hover:text-black" onClick={() => setDropdownOpen(false)}>Dashboard</Link>}
+                    {user.coachingLevel && <Link href="/coach_dashboard" className="w-full px-3 py-2 text-gray-700 hover:text-black" onClick={() => setDropdownOpen(false)}>Dashboard</Link>}
                     <button onClick={handleLogout} className="w-full px-4 py-2 text-left text-red-600 hover:bg-gray-50">
                       Sign out
                     </button>
@@ -83,9 +85,13 @@ sign-in
             <Link href="/marketplace" className="block px-4 py-2 text-gray-700 hover:bg-gray-50" onClick={() => setMenuOpen(false)} data-aos="zoom-in" data-aos-duration="1000">Marketplace</Link>
             <Link href="/coaches" className="block px-4 py-2 text-gray-700 hover:bg-gray-50" onClick={() => setMenuOpen(false)} data-aos="zoom-in" data-aos-duration="1000">Coaches</Link>
             {user ? (
-              <button onClick={handleLogout} className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50">
+              <div className="flex flex-col gap-2">
+            {!user.coachingLevel && <Link href="/player_dashboard" className="block px-4 py-2 text-gray-700 hover:bg-gray-50" onClick={() => setMenuOpen(false)} data-aos="zoom-in" data-aos-duration="1000">Coaches</Link>}
+            {user.coachingLevel && <Link href="/coach_dashboard" className="block px-4 py-2 text-gray-700 hover:bg-gray-50" onClick={() => setMenuOpen(false)} data-aos="zoom-in" data-aos-duration="1000">Coaches</Link>}
+                <button onClick={handleLogout} className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50">
                 Sign out
               </button>
+              </div>
             ) : (
               <Link href="/login" className="block px-4 py-2 text-gray-700 hover:bg-gray-50" onClick={() => setMenuOpen(false)} data-aos="zoom-in" data-aos-duration="1000">
                 Sign in
