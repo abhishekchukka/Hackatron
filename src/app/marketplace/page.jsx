@@ -50,7 +50,7 @@ const MarketplacePage = () => {
   const fetchVerifiedPlayers = async () => {
     try {
       const playersRef = collection(db, "players");
-      const q = query(playersRef, where("isVerified", "==", true));
+      const q = query(playersRef, where("status", "==", "active"));
       const querySnapshot = await getDocs(q);
       
       const verifiedPlayers = querySnapshot.docs.map(doc => ({
