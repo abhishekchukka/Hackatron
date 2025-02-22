@@ -26,7 +26,7 @@ import {
   Activity, Target, MapPin, Clock,
   CheckCircle, Star, Dumbbell, Heart
 } from "lucide-react";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, updateDoc, arrayUnion, getDoc } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import { toast } from "sonner";
 
@@ -64,6 +64,65 @@ const MarketplacePage = () => {
       toast.error("Failed to load players");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleLikePlayer = async (player) => {
+    try {
+      // Get coach data from localStorage
+      const coachData = JSON.parse(localStorage.getItem('user'));
+      
+      if (!coachData || !coachData.email) {
+        toast.error("Please login as a coach first");
+        return;
+      }
+
+      // Reference to the player's document
+      const playerRef = doc(db, "players", player.email);
+      
+      // Get current player data to check if coach already liked
+      const playerSnap = await getDoc(playerRef);
+      const playerData = playerSnap.data();
+      
+      if (playerData.marketplaceRequests?.some(req => req.coachId === coachData.email)) {
+        toast.info("You've already shown interest in this player");
+        return;
+      }
+
+      // Update player's document - add to marketplaceRequests
+      await updateDoc(playerRef, {
+        marketplaceRequests: arrayUnion({
+          coachId: coachData.email,
+          coachName: coachData.fullName,
+          date: new Date().toISOString(),
+          status: 'pending',
+          type: 'coach'
+        })
+      });
+
+      toast.success("Interest shown successfully!");
+      
+      // Update local state to reflect the change
+      setPlayers(prev => 
+        prev.map(p => 
+          p.email === player.email 
+            ? {
+                ...p,
+                marketplaceRequests: [...(p.marketplaceRequests || []), {
+                  coachId: coachData.email,
+                  coachName: coachData.fullName,
+                  date: new Date().toISOString(),
+                  status: 'pending',
+                  type: 'coach'
+                }]
+              }
+            : p
+        )
+      );
+
+    } catch (error) {
+      console.error("Error showing interest:", error);
+      toast.error("Failed to show interest. Please try again.");
     }
   };
 
@@ -244,8 +303,24 @@ const MarketplacePage = () => {
                     >
                       View Profile
                     </Button>
-                    <Button variant="outline" size="icon">
-                      <Heart className="w-4 h-4" />
+                    <Button 
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleLikePlayer(player)}
+                      disabled={player.marketplaceRequests?.some(req => req.coachId === JSON.parse(localStorage.getItem('user'))?.email)}
+                      className={player.marketplaceRequests?.some(req => req.coachId === JSON.parse(localStorage.getItem('user'))?.email) ? "bg-primary/10" : ""}
+                    >
+                      {player.marketplaceRequests?.some(req => req.coachId === JSON.parse(localStorage.getItem('user'))?.email) ? (
+                        <>
+                          <Heart className="w-4 h-4 mr-2 fill-primary" />
+                          Interested
+                        </>
+                      ) : (
+                        <>
+                          <Heart className="w-4 h-4 mr-2" />
+                          Show Interest
+                        </>
+                      )}
                     </Button>
                   </div>
                 </div>

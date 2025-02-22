@@ -16,11 +16,13 @@ import {
 import { collection, query, where, getDocs, doc, updateDoc, deleteDoc } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import { toast } from "sonner";
+import { useRouter } from 'next/navigation';
 
 const CoachDashboard = () => {
   const [coachData, setCoachData] = useState(null);
   const [marketplaceRequests, setMarketplaceRequests] = useState([]);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     try {
@@ -43,8 +45,8 @@ const CoachDashboard = () => {
   const fetchMarketplaceRequests = async (coachEmail) => {
     try {
       const requestsRef = collection(db, "marketplace_requests");
-      const requestsQuery = query(requestsRef, where("lookingForCoach", "==", true));
-      const querySnapshot = await getDocs(requestsQuery);
+    //   const requestsQuery = query(requestsRef, where("lookingForCoach", "==", true));
+      const querySnapshot = await getDocs(requestsRef);
       
       const requests = querySnapshot.docs.map(doc => ({
         id: doc.id,
@@ -252,7 +254,8 @@ const CoachDashboard = () => {
                         size="sm" 
                         variant="ghost"
                         onClick={() => {
-                          toast.info("View profile functionality coming soon");
+                          const encodedEmail = encodeURIComponent(request.playerId);
+                          router.push(`/profile/player/${encodedEmail}`);
                         }}
                       >
                         View Profile

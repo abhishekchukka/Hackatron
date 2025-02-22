@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Card } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -17,24 +17,30 @@ import {
   XCircle,
   Send,
   UserCheck,
-  Building
+  Building,
+  Brain, Utensils, TrendingUp, ListTodo
 } from "lucide-react";
-import { doc, setDoc, collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc, collection, addDoc, serverTimestamp, updateDoc, getDoc } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import { toast } from "sonner";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY);
 
 const PlayerDashboard = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [playerData, setPlayerData] = useState(null);
   const [loading, setLoading] = useState(true);
-
+  const [coachDetails, setCoachDetails] = useState({});
+  //  console.log( "coachDetails"+coachDetails)
 
   useEffect(() => {
     try {
       // Get user data from localStorage
       const userData = JSON.parse(localStorage.getItem('user'));
       if (userData) {
-
+        console.log("userData"+userData)
         setPlayerData(userData);
       } else {
         toast.error("User data not found");
@@ -48,6 +54,31 @@ const PlayerDashboard = () => {
       setLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    const fetchCoachDetails = async () => {
+      // console.log("playerData"+playerData)
+      if (!playerData?.marketplaceRequests) return;
+      console.log("playerData?.marketplaceRequests"+playerData?.marketplaceRequests)
+      try {
+        const details = {};
+        for (const request of playerData.marketplaceRequests) {
+          console.log("request"+request)
+          const coachRef = doc(db, "coaches", request.coachId);
+          const coachSnap = await getDoc(coachRef);
+          if (coachSnap.exists()) {
+          // console.log("coachSnap.data()"+coachSnap.data())
+            details[request.coachId] = coachSnap.data();
+          }
+        }
+        setCoachDetails(details);
+      } catch (error) {
+        console.error("Error fetching coach details:", error);
+      }
+    };
+
+    fetchCoachDetails();
+  }, [playerData?.marketplaceRequests]);
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center">
@@ -80,27 +111,19 @@ const PlayerDashboard = () => {
         primarySport: playerData.primarySport,
         experience: playerData.playingExperience,
         currentLevel: playerData.currentLevel,
-        achievements: playerData.achievements.split(','),
+        achievements: playerData.achievements?.split(',') || [],
         lookingForCoach: playerData.lookingForCoach,
         lookingForTeam: playerData.lookingForTeam,
         location: playerData.address,
-        contactInfo: {
-          email: playerData.email,
-          phone: playerData.phone,
-          address: playerData.address
-        },
-        playerDetails: {
-          age: new Date().getFullYear() - new Date(playerData.dateOfBirth).getFullYear(),
-          height: playerData.height,
-          weight: playerData.weight,
-          dominantSide: playerData.dominantSide,
-          currentClub: playerData.currentClub
-        },
+        email: playerData.email,
+        height: playerData.height,
+        weight: playerData.weight,
+        dominantSide: playerData.dominantSide,
+        currentClub: playerData.currentClub,
         status: "pending",
         createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-        interestedCoaches: [],
-        interestedOrganizations: [],
+        marketplaceRequests: [],
+        isVerified: false
       };
 
       // Create the marketplace_requests collection and add document
@@ -116,6 +139,267 @@ const PlayerDashboard = () => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleConnectRequest = async (request) => {
+    try {
+      // Update the request status
+      const playerRef = doc(db, "players", playerData.email);
+      
+      await updateDoc(playerRef, {
+        marketplaceRequests: playerData.marketplaceRequests.map(req => 
+          req.coachId === request.coachId 
+            ? { ...req, status: 'accepted' }
+            : req
+        )
+      });
+
+      toast.success("Connection request accepted!");
+      
+      // Update local state
+      setPlayerData(prev => ({
+        ...prev,
+        marketplaceRequests: prev.marketplaceRequests.map(req => 
+          req.coachId === request.coachId 
+            ? { ...req, status: 'accepted' }
+            : req
+        )
+      }));
+    } catch (error) {
+      console.error("Error accepting connection:", error);
+      toast.error("Failed to accept connection");
+    }
+  };
+
+  const AIInsights = ({ playerData }) => {
+    const [insights, setInsights] = useState({
+      trainingPlan: null,
+      dietPlan: null,
+      growthPath: null,
+      loading: true,
+      error: null
+    });
+
+    useEffect(() => {
+      generateInsights();
+    }, [playerData]);
+
+    const generateInsights = async () => {
+      try {
+        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+
+        // Structure the player data for the prompt
+        const playerContext = `
+          Player Profile:
+          - Name: ${playerData.fullName}
+          - Sport: ${playerData.primarySport}
+          - Level: ${playerData.currentLevel}
+          - Experience: ${playerData.playingExperience} years
+          - Physical: Height ${playerData.height}cm, Weight ${playerData.weight}kg
+          - Goals: ${playerData.careerGoal}
+          - Current Fitness: ${playerData.fitnessLevel}
+        `;
+
+        // Generate Training Plan
+        const trainingPrompt = `
+          As a professional sports coach, create a structured 4-week training plan for this player:
+          ${playerContext}
+          Format the response as JSON with:
+          {
+            "weeklyPlans": [
+              {
+                "week": 1,
+                "focus": "",
+                "sessions": [
+                  { "day": "Monday", "activity": "", "duration": "", "intensity": "" }
+                ]
+              }
+            ],
+            "keyMetrics": ["metric1", "metric2"],
+            "expectedOutcomes": ["outcome1", "outcome2"]
+          }
+        `;
+        console.log("Training prompt:", trainingPrompt);
+
+        const trainingResponse = await model.generateContent(trainingPrompt);
+        console.log("Training response:", trainingResponse);
+        const trainingPlan = JSON.parse(trainingResponse.response.text());
+        console.log("Training plan:", trainingPlan);
+
+        // Generate Diet Plan
+        // const dietPrompt = `
+        //   As a sports nutritionist, create a personalized diet plan for this athlete:
+        //   ${playerContext}
+        //   Format as JSON with:
+        //   {
+        //     "dailyMeals": [
+        //       {
+        //         "meal": "Breakfast",
+        //         "suggestions": [],
+        //         "nutrients": { "protein": "", "carbs": "", "fats": "" }
+        //       }
+        //     ],
+        //     "hydration": "",
+        //     "supplements": []
+        //   }
+        // `;
+
+        // const dietResponse = await model.generateContent(dietPrompt);
+        // const dietPlan = JSON.parse(dietResponse.response.text());
+
+        // // Generate Growth Path
+        // const growthPrompt = `
+        //   Create a career progression roadmap for this athlete:
+        //   ${playerContext}
+        //   Format as JSON with:
+        //   {
+        //     "milestones": [
+        //       {
+        //         "level": "",
+        //         "timeframe": "",
+        //         "objectives": [],
+        //         "skillsToMaster": []
+        //       }
+        //     ],
+        //     "opportunities": [],
+        //     "recommendations": []
+        //   }
+        // `;
+
+        // const growthResponse = await model.generateContent(growthPrompt);
+        // const growthPath = JSON.parse(growthResponse.response.text());
+
+        setInsights({
+          trainingPlan,
+          dietPlan,
+          growthPath,
+          loading: false,
+          error: null
+        });
+
+      } catch (error) {
+        console.error("Error generating insights:", error);
+        setInsights(prev => ({ ...prev, loading: false, error: error.message }));
+      }
+    };
+
+    if (insights.loading) {
+      return <div className="flex items-center justify-center p-8">Loading AI insights...</div>;
+    }
+
+    if (insights.error) {
+      return <div className="text-red-500 p-4">Error loading insights: {insights.error}</div>;
+    }
+
+    return (
+      <Card className="mt-8">
+        <CardHeader>
+          <CardTitle className="text-2xl font-semibold flex items-center gap-2">
+            <Brain className="w-6 h-6 text-primary" />
+            AI-Powered Insights
+          </CardTitle>
+          <CardDescription>
+            Personalized recommendations based on your profile
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="training" className="w-full">
+            <TabsList className="grid grid-cols-3 gap-4 mb-8">
+              <TabsTrigger value="training" className="flex items-center gap-2">
+                <ListTodo className="w-4 h-4" />
+                Training Plan
+              </TabsTrigger>
+              <TabsTrigger value="diet" className="flex items-center gap-2">
+                <Utensils className="w-4 h-4" />
+                Diet Plan
+              </TabsTrigger>
+              <TabsTrigger value="growth" className="flex items-center gap-2">
+                <TrendingUp className="w-4 h-4" />
+                Growth Path
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="training" className="space-y-6">
+              {/* Training Plan Content */}
+              <div className="space-y-6">
+                {insights.trainingPlan.weeklyPlans.map((week, index) => (
+                  <div key={index} className="space-y-4">
+                    <h4 className="font-medium">Week {week.week}: {week.focus}</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {week.sessions.map((session, idx) => (
+                        <div key={idx} className="bg-gray-50 p-4 rounded-lg">
+                          <div className="font-medium text-primary">{session.day}</div>
+                          <div className="text-sm text-gray-600">{session.activity}</div>
+                          <div className="text-sm text-gray-500">
+                            {session.duration} • {session.intensity}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="diet" className="space-y-6">
+              {/* Diet Plan Content */}
+              <div className="grid gap-6">
+                {insights.dietPlan.dailyMeals.map((meal, index) => (
+                  <div key={index} className="space-y-3">
+                    <h4 className="font-medium text-primary">{meal.meal}</h4>
+                    <ul className="list-disc list-inside text-sm text-gray-600">
+                      {meal.suggestions.map((item, idx) => (
+                        <li key={idx}>{item}</li>
+                      ))}
+                    </ul>
+                    <div className="grid grid-cols-3 gap-4">
+                      {Object.entries(meal.nutrients).map(([nutrient, value]) => (
+                        <div key={nutrient} className="bg-gray-50 p-2 rounded text-center">
+                          <div className="text-xs text-gray-500 capitalize">{nutrient}</div>
+                          <div className="font-medium">{value}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="growth" className="space-y-6">
+              {/* Growth Path Content */}
+              <div className="space-y-8">
+                {insights.growthPath.milestones.map((milestone, index) => (
+                  <div key={index} className="relative pl-6 border-l-2 border-primary/20">
+                    <div className="absolute -left-2 top-0 w-4 h-4 rounded-full bg-primary"></div>
+                    <h4 className="font-medium text-primary mb-2">
+                      {milestone.level} • {milestone.timeframe}
+                    </h4>
+                    <div className="space-y-3">
+                      <div>
+                        <div className="text-sm font-medium">Objectives:</div>
+                        <ul className="list-disc list-inside text-sm text-gray-600">
+                          {milestone.objectives.map((obj, idx) => (
+                            <li key={idx}>{obj}</li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div>
+                        <div className="text-sm font-medium">Skills to Master:</div>
+                        <ul className="list-disc list-inside text-sm text-gray-600">
+                          {milestone.skillsToMaster.map((skill, idx) => (
+                            <li key={idx}>{skill}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+    );
   };
 
   return (
@@ -305,7 +589,7 @@ const PlayerDashboard = () => {
               <h3 className="text-xl font-semibold">Marketplace</h3>
             </div>
 
-            {!playerData.isVerified ? (
+            {playerData.status !== "active" ? (
               <div className="space-y-4">
                 <div className="bg-yellow-50 border border-yellow-100 p-4 rounded-lg">
                   <div className="flex items-center gap-2 mb-2">
@@ -339,33 +623,67 @@ const PlayerDashboard = () => {
                   <p className="text-green-600 font-medium">Your profile is verified</p>
                 </div>
 
-                {playerData.marketplaceRequests.length > 0 ? (
+                {playerData.marketplaceRequests?.length > 0 ? (
                   <div className="grid gap-4">
                     {playerData.marketplaceRequests.map((request, index) => (
                       <div 
                         key={index}
                         className="flex items-center justify-between p-4 bg-primary/5 rounded-lg"
                       >
-                        <div className="flex items-center gap-3">
-                          {request.type === 'coach' ? (
-                            <UserCheck className="w-5 h-5 text-primary" />
-                          ) : (
-                            <Building className="w-5 h-5 text-primary" />
-                          )}
+                        <div className="flex items-center gap-4">
+                          <Avatar className="h-10 w-10">
+                            <AvatarImage 
+                              src={coachDetails[request.coachId]?.profilePicture} 
+                              alt={request.coachName}
+                            />
+                            <AvatarFallback>
+                              {request.coachName.charAt(0)}
+                            </AvatarFallback>
+                          </Avatar>
                           <div>
-                            <p className="font-medium">{request.name}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {request.type === 'coach' ? 'Coach' : 'Organization'} • {request.location}
-                            </p>
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium">{request.coachName}</p>
+                              {coachDetails[request.coachId]?.isVerified && (
+                                <CheckCircle className="w-4 h-4 text-green-500" />
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <UserCheck className="w-4 h-4" />
+                              <span>{coachDetails[request.coachId]?.primarySport} Coach</span>
+                              <span>•</span>
+                              <span>{new Date(request.date).toLocaleDateString()}</span>
+                            </div>
+                            {request.status === 'pending' && (
+                              <Badge variant="outline" className="mt-2">
+                                Pending
+                              </Badge>
+                            )}
+                            {request.status === 'accepted' && (
+                              <Badge variant="success" className="mt-2">
+                                Connected
+                              </Badge>
+                            )}
                           </div>
                         </div>
                         <div className="flex gap-2">
-                          <Button size="sm" variant="outline">
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => {
+                              const encodedEmail = encodeURIComponent(request.coachId);
+                              window.location.href = `/profile/coach/${encodedEmail}`;
+                            }}
+                          >
                             View Profile
                           </Button>
-                          <Button size="sm">
-                            Connect
-                          </Button>
+                          {request.status === 'pending' && (
+                            <Button 
+                              size="sm"
+                              onClick={() => handleConnectRequest(request)}
+                            >
+                              Connect
+                            </Button>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -380,6 +698,9 @@ const PlayerDashboard = () => {
             )}
           </Card>
         </div>
+
+        {/* AI Insights Section */}
+        {/* <AIInsights playerData={playerData} /> */}
       </div>
     </div>
   );

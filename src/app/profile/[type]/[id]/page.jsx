@@ -9,14 +9,20 @@ import {
   Mail, Trophy, Dumbbell, Heart, Star,
   GraduationCap, Award, Clock, Briefcase,
   CheckCircle, Target, UserCheck, Users,
-  AlertCircle, Building
+  AlertCircle, Building, Brain, Utensils, TrendingUp, ListTodo
 } from "lucide-react";
 import { doc, getDoc } from 'firebase/firestore';
 import { toast } from 'sonner';
 import { db } from '@/app/utils/firebase';
 import { useParams } from 'next/navigation';
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const DEFAULT_PROFILE_IMAGE = "https://api.dicebear.com/7.x/initials/svg";
+
+// Initialize Gemini
+const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY);
 
 const ProfilePage = () => {
   const [profileData, setProfileData] = useState(null);
@@ -314,7 +320,12 @@ const ProfilePage = () => {
         </Card>
 
         {/* Render specific details based on type */}
-        {type === 'player' ? renderPlayerDetails() : renderCoachDetails()}
+        {type === 'player' ? (
+        
+            renderPlayerDetails()
+           
+        
+        ) : renderCoachDetails()}
       </div>
     </div>
   );
