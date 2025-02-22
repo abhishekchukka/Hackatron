@@ -13,14 +13,17 @@ import {
   Users, Clock, Briefcase, GraduationCap,
   Award, Star
 } from "lucide-react";
-import { collection, query, where, getDocs, doc, updateDoc, deleteDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, updateDoc, deleteDoc, getDoc } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import { toast } from "sonner";
+import { useRouter } from 'next/navigation';
 
 const CoachDashboard = () => {
   const [coachData, setCoachData] = useState(null);
   const [marketplaceRequests, setMarketplaceRequests] = useState([]);
+  const [playerDetails, setPlayerDetails] = useState({});
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     try {
@@ -40,11 +43,33 @@ const CoachDashboard = () => {
     }
   }, []);
 
+  useEffect(() => {
+    const fetchPlayerDetails = async () => {
+      if (!coachData?.interestedPlayers) return;
+
+      try {
+        const details = {};
+        for (const request of coachData.interestedPlayers) {
+          const playerRef = doc(db, "players", request.playerId);
+          const playerSnap = await getDoc(playerRef);
+          if (playerSnap.exists()) {
+            details[request.playerId] = playerSnap.data();
+          }
+        }
+        setPlayerDetails(details);
+      } catch (error) {
+        console.error("Error fetching player details:", error);
+      }
+    };
+
+    fetchPlayerDetails();
+  }, [coachData]);
+
   const fetchMarketplaceRequests = async (coachEmail) => {
     try {
       const requestsRef = collection(db, "marketplace_requests");
-      const requestsQuery = query(requestsRef, where("lookingForCoach", "==", true));
-      const querySnapshot = await getDocs(requestsQuery);
+    //   const requestsQuery = query(requestsRef, where("lookingForCoach", "==", true));
+      const querySnapshot = await getDocs(requestsRef);
       
       const requests = querySnapshot.docs.map(doc => ({
         id: doc.id,
@@ -252,7 +277,8 @@ const CoachDashboard = () => {
                         size="sm" 
                         variant="ghost"
                         onClick={() => {
-                          toast.info("View profile functionality coming soon");
+                          const encodedEmail = encodeURIComponent(request.playerId);
+                          router.push(`/profile/player/${encodedEmail}`);
                         }}
                       >
                         View Profile
@@ -276,6 +302,61 @@ const CoachDashboard = () => {
             )}
           </div>
         </Card>
+
+        {/* Interested Players Section */}
+        <div className="mt-8">
+          <h2 className="text-2xl font-bold mb-4">Interested Players</h2>
+          {coachData?.interestedPlayers?.length > 0 ? (
+            <div className="grid gap-4">
+              {coachData.interestedPlayers.map((request, index) => (
+                <div 
+                  key={index}
+                  className="flex items-center justify-between p-4 bg-primary/5 rounded-lg"
+                >
+                  <div className="flex items-center gap-4">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage 
+                        src={playerDetails[request.playerId]?.profilePicture} 
+                        alt={request.playerName}
+                      />
+                      <AvatarFallback>
+                        {request.playerName.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium">{request.playerName}</p>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <UserCheck className="w-4 h-4" />
+                        <span>{playerDetails[request.playerId]?.primarySport}</span>
+                        <span>•</span>
+                        <span>{new Date(request.date).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => {
+                        const encodedEmail = encodeURIComponent(request.playerId);
+                        window.location.href = `/profile/player/${encodedEmail}`;
+                      }}
+                    >
+                      View Profile
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <XCircle className="w-12 h-12 mx-auto mb-3 opacity-20" />
+              <p>No interested players yet</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

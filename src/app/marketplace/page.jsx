@@ -26,7 +26,7 @@ import {
   Activity, Target, MapPin, Clock,
   CheckCircle, Star, Dumbbell, Heart
 } from "lucide-react";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, updateDoc, arrayUnion, getDoc } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import { toast } from "sonner";
 
@@ -64,6 +64,49 @@ const MarketplacePage = () => {
       toast.error("Failed to load players");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleLikePlayer = async (player) => {
+    try {
+      const userData = JSON.parse(localStorage.getItem('user'));
+      if (!userData) {
+        toast.error("Please login first");
+        return;
+      }
+
+      // Check if user is a coach
+      if (!userData.coachingLevel) {
+        toast.error("Only coaches can show interest in players");
+        return;
+      }
+
+      // Add request to player's marketplaceRequests
+      const playerRef = doc(db, "players", player.email);
+      await updateDoc(playerRef, {
+        marketplaceRequests: arrayUnion({
+          coachId: userData.email,
+          coachName: userData.fullName,
+          status: 'pending',
+          date: new Date().toISOString()
+        })
+      });
+
+      // Add player to coach's interestedPlayers array
+      const coachRef = doc(db, "coaches", userData.email);
+      await updateDoc(coachRef, {
+        interestedPlayers: arrayUnion({
+          playerId: player.email,
+          playerName: player.fullName,
+          status: 'pending',
+          date: new Date().toISOString()
+        })
+      });
+
+      toast.success("Interest shown successfully!");
+    } catch (error) {
+      console.error("Error showing interest:", error);
+      toast.error("Failed to show interest");
     }
   };
 
@@ -244,8 +287,27 @@ const MarketplacePage = () => {
                     >
                       View Profile
                     </Button>
-                    <Button variant="outline" size="icon">
-                      <Heart className="w-4 h-4" />
+                    <Button 
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleLikePlayer(player)}
+                      disabled={
+                        !JSON.parse(localStorage.getItem('user'))?.coachingLevel ||
+                        player.marketplaceRequests?.some(req => req.coachId === JSON.parse(localStorage.getItem('user'))?.email)
+                      }
+                      className={player.marketplaceRequests?.some(req => req.coachId === JSON.parse(localStorage.getItem('user'))?.email) ? "bg-primary/10" : ""}
+                    >
+                      {player.marketplaceRequests?.some(req => req.coachId === JSON.parse(localStorage.getItem('user'))?.email) ? (
+                        <>
+                          <Heart className="w-4 h-4 mr-2 fill-primary" />
+                          Interested
+                        </>
+                      ) : (
+                        <>
+                          <Heart className="w-4 h-4 mr-2" />
+                          Show Interest
+                        </>
+                      )}
                     </Button>
                   </div>
                 </div>
