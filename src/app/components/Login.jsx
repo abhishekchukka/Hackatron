@@ -1,7 +1,7 @@
 "use client";
 
 import { Pacifico, Poppins } from "next/font/google";
-import React, { useRef, useState} from "react";
+import React, { useRef, useState, useEffect} from "react";
 import toast from "react-hot-toast";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { useRouter } from "next/navigation";
@@ -9,23 +9,26 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { db } from "../utils/firebase";  // Firestore instance
 import { collection, getDocs, query, where } from "firebase/firestore";
-import { useDispatch } from "react-redux";
-import { setUser } from "../utils/store/slices/userSlice";
 
 
 const poppins = Poppins({ subsets: ["latin"], weight: ["400"], display: "swap" });
 const pacifico = Pacifico({ subsets: ["latin"], weight: ["400"], display: "swap" });
 
 const Login = () => {
+    const router = useRouter();
+    useEffect(() => {
+        if (localStorage.getItem("user")) {
+            router.replace("/");
+        }
+    }, []);
     const emailRef = useRef(null);
     const passwordRef = useRef(null);
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
-    const router = useRouter();
-    const dispatch = useDispatch();
-
-    
     let user = null;
+    
+    
+    
     // ✅ Function to check if email exists in "coaches" or "players"
     const checkUserCollection = async (email, password) => {
         try {

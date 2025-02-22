@@ -6,6 +6,7 @@ import { Toaster } from "sonner";
 import Header from "./components/Header";
 import { Provider } from "react-redux";
 import appStore from "./utils/store/appStore";
+import AOSProvider from "./utils/AOSProvider"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,11 +27,14 @@ export default function RootLayout({ children }) {
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <AOSProvider>
         <Provider store={appStore}>
            <Toaster position="top-center" richColors />
            <Header />
         {children}
         </Provider>
+        </AOSProvider>
+
       </body>
     </html>
   );
