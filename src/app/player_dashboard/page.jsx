@@ -40,7 +40,7 @@ const PlayerDashboard = () => {
       // Get user data from localStorage
       const userData = JSON.parse(localStorage.getItem('user'));
       if (userData) {
-        console.log("userData"+userData)
+        console.log("userData"+ JSON.stringify(userData))
         setPlayerData(userData);
       } else {
         toast.error("User data not found");
@@ -221,10 +221,10 @@ const PlayerDashboard = () => {
         `;
         console.log("Training prompt:", trainingPrompt);
 
-        const trainingResponse = await model.generateContent(trainingPrompt);
-        console.log("Training response:", trainingResponse);
-        const trainingPlan = JSON.parse(trainingResponse.response.text());
-        console.log("Training plan:", trainingPlan);
+        // const trainingResponse = await model.generateContent(trainingPrompt);
+        // console.log("Training response:", trainingResponse);
+        // const trainingPlan = JSON.parse(trainingResponse.response.text());
+        // console.log("Training plan:", trainingPlan);
 
         // Generate Diet Plan
         // const dietPrompt = `

@@ -69,60 +69,44 @@ const MarketplacePage = () => {
 
   const handleLikePlayer = async (player) => {
     try {
-      // Get coach data from localStorage
-      const coachData = JSON.parse(localStorage.getItem('user'));
-      
-      if (!coachData || !coachData.email) {
-        toast.error("Please login as a coach first");
+      const userData = JSON.parse(localStorage.getItem('user'));
+      if (!userData) {
+        toast.error("Please login first");
         return;
       }
 
-      // Reference to the player's document
+      // Check if user is a coach
+      if (!userData.coachingLevel) {
+        toast.error("Only coaches can show interest in players");
+        return;
+      }
+
+      // Add request to player's marketplaceRequests
       const playerRef = doc(db, "players", player.email);
-      
-      // Get current player data to check if coach already liked
-      const playerSnap = await getDoc(playerRef);
-      const playerData = playerSnap.data();
-      
-      if (playerData.marketplaceRequests?.some(req => req.coachId === coachData.email)) {
-        toast.info("You've already shown interest in this player");
-        return;
-      }
-
-      // Update player's document - add to marketplaceRequests
       await updateDoc(playerRef, {
         marketplaceRequests: arrayUnion({
-          coachId: coachData.email,
-          coachName: coachData.fullName,
-          date: new Date().toISOString(),
+          coachId: userData.email,
+          coachName: userData.fullName,
           status: 'pending',
-          type: 'coach'
+          date: new Date().toISOString()
+        })
+      });
+
+      // Add player to coach's interestedPlayers array
+      const coachRef = doc(db, "coaches", userData.email);
+      await updateDoc(coachRef, {
+        interestedPlayers: arrayUnion({
+          playerId: player.email,
+          playerName: player.fullName,
+          status: 'pending',
+          date: new Date().toISOString()
         })
       });
 
       toast.success("Interest shown successfully!");
-      
-      // Update local state to reflect the change
-      setPlayers(prev => 
-        prev.map(p => 
-          p.email === player.email 
-            ? {
-                ...p,
-                marketplaceRequests: [...(p.marketplaceRequests || []), {
-                  coachId: coachData.email,
-                  coachName: coachData.fullName,
-                  date: new Date().toISOString(),
-                  status: 'pending',
-                  type: 'coach'
-                }]
-              }
-            : p
-        )
-      );
-
     } catch (error) {
       console.error("Error showing interest:", error);
-      toast.error("Failed to show interest. Please try again.");
+      toast.error("Failed to show interest");
     }
   };
 
@@ -307,7 +291,10 @@ const MarketplacePage = () => {
                       size="sm"
                       variant="outline"
                       onClick={() => handleLikePlayer(player)}
-                      disabled={player.marketplaceRequests?.some(req => req.coachId === JSON.parse(localStorage.getItem('user'))?.email)}
+                      disabled={
+                        !JSON.parse(localStorage.getItem('user'))?.coachingLevel ||
+                        player.marketplaceRequests?.some(req => req.coachId === JSON.parse(localStorage.getItem('user'))?.email)
+                      }
                       className={player.marketplaceRequests?.some(req => req.coachId === JSON.parse(localStorage.getItem('user'))?.email) ? "bg-primary/10" : ""}
                     >
                       {player.marketplaceRequests?.some(req => req.coachId === JSON.parse(localStorage.getItem('user'))?.email) ? (

@@ -21,7 +21,7 @@ export default function Header() {
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem("user"));
     if (storedUser) {
-      setUser(storedUser.fullName);
+      setUser(storedUser);
     }
   }, []);
 
@@ -51,15 +51,23 @@ export default function Header() {
                   className="flex items-center space-x-2 bg-gray-50 hover:bg-gray-100 px-4 py-2 rounded-lg"
                   onClick={() => setDropdownOpen(!dropdownOpen)}
                 >
-                  <span data-aos="zoom-in" data-aos-duration="1000">{user}</span>
+                  <span data-aos="zoom-in" data-aos-duration="1000">{user.fullName}</span>
                   <ChevronDown size={16} className={`transform ${dropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
 
                 {dropdownOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 py-1">
-                    {!user.coachingLevel && <Link href="/player_dashboard" className="w-full px-3 py-2 text-gray-700 hover:text-black" onClick={() => setDropdownOpen(false)}>Dashboard</Link>}
-                    {user.coachingLevel && <Link href="/coach_dashboard" className="w-full px-3 py-2 text-gray-700 hover:text-black" onClick={() => setDropdownOpen(false)}>Dashboard</Link>}
-                    <button onClick={handleLogout} className="w-full px-4 py-2 text-left text-red-600 hover:bg-gray-50">
+                    <Link 
+                      href={user.coachingLevel ? "/coach_dashboard" : "/player_dashboard"} 
+                      className="block w-full px-3 py-2 text-gray-700 hover:text-black hover:bg-gray-50" 
+                      onClick={() => setDropdownOpen(false)}
+                    >
+                      Dashboard
+                    </Link>
+                    <button 
+                      onClick={handleLogout} 
+                      className="w-full px-4 py-2 text-left text-red-600 hover:bg-gray-50"
+                    >
                       Sign out
                     </button>
                   </div>
@@ -67,7 +75,7 @@ export default function Header() {
               </div>
             ) : (
               <Link href="/login" className="bg-gray-50 hover:bg-gray-100 px-6 py-2 rounded-lg" data-aos="zoom-in" data-aos-duration="1000">
-sign-in
+                Sign in
               </Link>
             )}
           </nav>
@@ -84,16 +92,33 @@ sign-in
             <Link href="/" className="block px-4 py-2 text-gray-700 hover:bg-gray-50" onClick={() => setMenuOpen(false)} data-aos="zoom-in" data-aos-duration="1000">Home</Link>
             <Link href="/marketplace" className="block px-4 py-2 text-gray-700 hover:bg-gray-50" onClick={() => setMenuOpen(false)} data-aos="zoom-in" data-aos-duration="1000">Marketplace</Link>
             <Link href="/coaches" className="block px-4 py-2 text-gray-700 hover:bg-gray-50" onClick={() => setMenuOpen(false)} data-aos="zoom-in" data-aos-duration="1000">Coaches</Link>
+            
             {user ? (
               <div className="flex flex-col gap-2">
-            {!user.coachingLevel && <Link href="/player_dashboard" className="block px-4 py-2 text-gray-700 hover:bg-gray-50" onClick={() => setMenuOpen(false)} data-aos="zoom-in" data-aos-duration="1000">Coaches</Link>}
-            {user.coachingLevel && <Link href="/coach_dashboard" className="block px-4 py-2 text-gray-700 hover:bg-gray-50" onClick={() => setMenuOpen(false)} data-aos="zoom-in" data-aos-duration="1000">Coaches</Link>}
-                <button onClick={handleLogout} className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50">
-                Sign out
-              </button>
+                <Link 
+                  href={user.coachingLevel ? "/coach_dashboard" : "/player_dashboard"}
+                  className="block px-4 py-2 text-gray-700 hover:bg-gray-50" 
+                  onClick={() => setMenuOpen(false)} 
+                  data-aos="zoom-in" 
+                  data-aos-duration="1000"
+                >
+                  Dashboard
+                </Link>
+                <button 
+                  onClick={handleLogout} 
+                  className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50"
+                >
+                  Sign out
+                </button>
               </div>
             ) : (
-              <Link href="/login" className="block px-4 py-2 text-gray-700 hover:bg-gray-50" onClick={() => setMenuOpen(false)} data-aos="zoom-in" data-aos-duration="1000">
+              <Link 
+                href="/login" 
+                className="block px-4 py-2 text-gray-700 hover:bg-gray-50" 
+                onClick={() => setMenuOpen(false)} 
+                data-aos="zoom-in" 
+                data-aos-duration="1000"
+              >
                 Sign in
               </Link>
             )}
