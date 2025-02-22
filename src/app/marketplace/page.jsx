@@ -72,7 +72,7 @@ const MarketplacePage = () => {
       <div className="container mx-auto px-4 md:px-6 py-8">
         {/* Hero Section */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-purple-600 text-transparent bg-clip-text">
+          <h1 className="text-4xl font-bold mb-4 bg-green-600 text-transparent bg-clip-text">
             Discover Elite Athletes
           </h1>
           <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
@@ -160,7 +160,7 @@ const MarketplacePage = () => {
                 className="group relative bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300"
               >
                 {/* Top Banner */}
-                <div className="absolute inset-x-0 h-24 bg-gradient-to-r from-primary/10 to-purple-500/10" />
+                <div className="absolute inset-x-0 h-24 bg-green-100" />
                 
                 {/* Content */}
                 <div className="relative p-6">
@@ -236,7 +236,7 @@ const MarketplacePage = () => {
                   {/* Action Buttons */}
                   <div className="flex gap-2 mt-4">
                     <Button 
-                      className="flex-1 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+                      className="flex-1 bg-green-600 hover:bg-green-700"
                       onClick={() => {
                         const encodedEmail = encodeURIComponent(player.email);
                         window.location.href = `/profile/player/${encodedEmail}`;
