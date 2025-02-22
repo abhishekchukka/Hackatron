@@ -88,7 +88,7 @@ const CoachDashboard = () => {
       // Update player's verification status
       const playerRef = doc(db, "players", request.playerId);
       await updateDoc(playerRef, {
-        isVerified: true,
+        status: "active",
         verifiedBy: coachData.email,
         verificationDate: new Date().toISOString()
       });

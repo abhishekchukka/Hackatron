@@ -33,41 +33,70 @@ const PlayerDashboard = () => {
   const [playerData, setPlayerData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [coachDetails, setCoachDetails] = useState({});
-  //  console.log( "coachDetails"+coachDetails)
 
-  useEffect(() => {
+  // Function to fetch fresh player data
+  const fetchPlayerData = async (email) => {
     try {
-      // Get user data from localStorage
-      const userData = JSON.parse(localStorage.getItem('user'));
-      if (userData) {
-        console.log("userData"+ JSON.stringify(userData))
-        setPlayerData(userData);
-      } else {
-        toast.error("User data not found");
-        // Optionally redirect to login
-        // router.push('/login');
+      const playerRef = doc(db, "players", email);
+      const playerSnap = await getDoc(playerRef);
+      if (playerSnap.exists()) {
+        const freshData = playerSnap.data();
+        // Update both state and localStorage
+        setPlayerData(freshData);
+        localStorage.setItem('user', JSON.stringify(freshData));
+        return freshData;
       }
     } catch (error) {
-      console.error("Error loading user data:", error);
-      toast.error("Failed to load user data");
-    } finally {
-      setLoading(false);
+      console.error("Error fetching player data:", error);
+      toast.error("Failed to refresh player data");
     }
+  };
+
+  useEffect(() => {
+    const initializeData = async () => {
+      try {
+        const userData = JSON.parse(localStorage.getItem('user'));
+        if (userData) {
+          // Fetch fresh data from Firestore
+          const freshData = await fetchPlayerData(userData.email);
+          if (!freshData) {
+            toast.error("User data not found");
+          }
+        } else {
+          toast.error("User data not found");
+        }
+      } catch (error) {
+        console.error("Error loading user data:", error);
+        toast.error("Failed to load user data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeData();
   }, []);
+
+  // Set up periodic refresh
+  useEffect(() => {
+    if (!playerData?.email) return;
+
+    const refreshInterval = setInterval(() => {
+      fetchPlayerData(playerData.email);
+    }, 10000); // Refresh every 10 seconds
+
+    return () => clearInterval(refreshInterval);
+  }, [playerData?.email]);
 
   useEffect(() => {
     const fetchCoachDetails = async () => {
-      // console.log("playerData"+playerData)
       if (!playerData?.marketplaceRequests) return;
-      console.log("playerData?.marketplaceRequests"+playerData?.marketplaceRequests)
+
       try {
         const details = {};
         for (const request of playerData.marketplaceRequests) {
-          console.log("request"+request)
           const coachRef = doc(db, "coaches", request.coachId);
           const coachSnap = await getDoc(coachRef);
           if (coachSnap.exists()) {
-          // console.log("coachSnap.data()"+coachSnap.data())
             details[request.coachId] = coachSnap.data();
           }
         }
@@ -141,30 +170,34 @@ const PlayerDashboard = () => {
     }
   };
 
+  // Handle connect request
   const handleConnectRequest = async (request) => {
     try {
-      // Update the request status
+      // Update the request status in player's document
       const playerRef = doc(db, "players", playerData.email);
-      
+      const updatedRequests = playerData.marketplaceRequests.map(req =>
+        req.coachId === request.coachId ? { ...req, status: 'accepted' } : req
+      );
       await updateDoc(playerRef, {
-        marketplaceRequests: playerData.marketplaceRequests.map(req => 
-          req.coachId === request.coachId 
-            ? { ...req, status: 'accepted' }
-            : req
-        )
+        marketplaceRequests: updatedRequests
       });
 
-      toast.success("Connection request accepted!");
-      
-      // Update local state
-      setPlayerData(prev => ({
-        ...prev,
-        marketplaceRequests: prev.marketplaceRequests.map(req => 
-          req.coachId === request.coachId 
-            ? { ...req, status: 'accepted' }
-            : req
-        )
-      }));
+      // Update the request status in coach's document
+      const coachRef = doc(db, "coaches", request.coachId);
+      const coachSnap = await getDoc(coachRef);
+      if (coachSnap.exists()) {
+        const coachData = coachSnap.data();
+        const updatedInterestedPlayers = coachData.interestedPlayers?.map(player =>
+          player.playerId === playerData.email ? { ...player, status: 'accepted' } : player
+        );
+        await updateDoc(coachRef, {
+          interestedPlayers: updatedInterestedPlayers
+        });
+      }
+
+      // Fetch fresh data to update the UI
+      await fetchPlayerData(playerData.email);
+      toast.success("Connection accepted!");
     } catch (error) {
       console.error("Error accepting connection:", error);
       toast.error("Failed to accept connection");

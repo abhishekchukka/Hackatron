@@ -5,6 +5,8 @@ import { Menu, X, ChevronDown } from "lucide-react";
 import { Poppins } from "next/font/google";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../utils/firebase";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -23,6 +25,37 @@ export default function Header() {
     if (storedUser) {
       setUser(storedUser);
     }
+  }, []);
+
+  useEffect(() => {
+    const checkUserUpdates = async () => {
+      const storedUser = JSON.parse(localStorage.getItem("user"));
+      if (!storedUser) return;
+
+      try {
+        // Determine collection based on user type
+        const collection = storedUser.coachingLevel ? "coaches" : "players";
+        const userRef = doc(db, collection, storedUser.email);
+        const userSnap = await getDoc(userRef);
+
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+          // Only update if data has changed
+          if (JSON.stringify(userData) !== JSON.stringify(storedUser)) {
+            localStorage.setItem('user', JSON.stringify(userData));
+            setUser(userData);
+          }
+        }
+      } catch (error) {
+        console.error("Error checking user updates:", error);
+      }
+    };
+
+    // Check for updates when component mounts and periodically
+    checkUserUpdates();
+    const interval = setInterval(checkUserUpdates, 30000); // Check every 30 seconds
+
+    return () => clearInterval(interval);
   }, []);
 
   const handleLogout = () => {
