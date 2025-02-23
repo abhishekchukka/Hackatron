@@ -50,7 +50,7 @@ const MarketplacePage = () => {
   const fetchVerifiedPlayers = async () => {
     try {
       const playersRef = collection(db, "players");
-      const q = query(playersRef, where("isVerified", "==", true));
+      const q = query(playersRef, where("status", "==", "active"));
       const querySnapshot = await getDocs(q);
       
       const verifiedPlayers = querySnapshot.docs.map(doc => ({
@@ -102,6 +102,30 @@ const MarketplacePage = () => {
           date: new Date().toISOString()
         })
       });
+
+      // Fetch updated coach data and update localStorage
+      const updatedCoachSnap = await getDoc(coachRef);
+      if (updatedCoachSnap.exists()) {
+        const updatedCoachData = updatedCoachSnap.data();
+        localStorage.setItem('user', JSON.stringify(updatedCoachData));
+      }
+
+      // Update local state to reflect changes immediately
+      setPlayers(prev => 
+        prev.map(p => 
+          p.email === player.email 
+            ? {
+                ...p,
+                marketplaceRequests: [...(p.marketplaceRequests || []), {
+                  coachId: userData.email,
+                  coachName: userData.fullName,
+                  status: 'pending',
+                  date: new Date().toISOString()
+                }]
+              }
+            : p
+        )
+      );
 
       toast.success("Interest shown successfully!");
     } catch (error) {

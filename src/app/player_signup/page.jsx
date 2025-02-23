@@ -378,7 +378,7 @@ const PlayerSignup = () => {
           heartCondition: false,
           other: false
         },
-        status: "active",
+        status: "factive",
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
