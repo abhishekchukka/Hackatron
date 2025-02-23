@@ -3,7 +3,7 @@ import Image from "next/image";
 const About = () => {
     return (
         <div className="flex flex-col items-center justify-center px-4 sm:px-6 py-12 bg-gray-100">
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-24 text-center">About Our Journey</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-24 text-center">Developed By</h2>
             
             {/* Image Grid */}
             <div className="container grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 gap-4 w-full max-w-4xl mx-auto">
