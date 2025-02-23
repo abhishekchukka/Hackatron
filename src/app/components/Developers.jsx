@@ -1,6 +1,7 @@
 import Image from "next/image";
 
 const About = () => {
+
   return (
     <div className="flex flex-col items-center justify-center px-4 sm:px-6 py-12 bg-gray-100">
       <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-24 text-center">
@@ -59,6 +60,7 @@ const About = () => {
       </div>
     </div>
   );
+
 };
 
 export default About;
