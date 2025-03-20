@@ -255,7 +255,7 @@ const PlayerDashboard = () => {
         setLoading(true);
         setError(null);
 
-        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
 
         const prompt = `You are a sports analysis AI specializing in athlete development. Analyze this athlete's profile and provide constructive insights even with limited information as if you are speaking with that player instead of referring him as a third person.
 
